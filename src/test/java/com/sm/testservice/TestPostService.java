@@ -116,58 +116,58 @@ public class TestPostService {
 		assertEquals(post, uploadMedia);	
 	}
 	
-//	@Test
-//	public void getNewsFeedPost() {
-//		when(postDao.findAllByRecordStatusOrderByPostIdDesc(true,PageRequest.of(0, 10))).thenReturn(posts);
-//		when(commentDao.findByPost(post)).thenReturn(comments);
-//		when(likeDao.countByPost(post)).thenReturn((long) 2);
-//		when(likeDao.findByPostAndUser(post, user)).thenReturn(like);
-//		when(profDao.findById(1)).thenReturn(profession);
-//		
-//		List<PostDto> newsFeedPosts = postService.getNewsFeedPosts(user, 0);
-//		
-//		assertEquals(1, newsFeedPosts.size());
-//		
-//	}
-//	@Test
-//	public void getNewsFeedPostForZeroLike() {
-//		when(postDao.findAllByRecordStatusOrderByPostIdDesc(true,PageRequest.of(0, 10))).thenReturn(posts);
-//		when(commentDao.findByPost(post)).thenReturn(comments);
-//		when(likeDao.countByPost(post)).thenReturn((long) 2);
-//		when(likeDao.findByPostAndUser(post, user)).thenReturn(null);
-//		when(profDao.findById(1)).thenReturn(profession);
-//		
-//		List<PostDto> newsFeedPosts = postService.getNewsFeedPosts(user, 0);
-//		
-//		assertEquals(1, newsFeedPosts.size());
-//	}
-//	
-//	@Test
-//	public void getNewsFeedPostForEmptyList() {
-//		when(postDao.findAllByRecordStatusOrderByPostIdDesc(true,PageRequest.of(0, 10))).thenReturn(new ArrayList<>());
-//		List<PostDto> uploadedPost = postService.getNewsFeedPosts(user, 0);
-//		assertEquals(0, uploadedPost.size());
-//		
-//	}
-//	
-//	@Test
-//	public void getUploadedPostForEmptyList() {
-//		when(postDao.findAllByUserAndRecordStatus(user,true, PageRequest.of(0, 10))).thenReturn(new ArrayList<>());
-//		List<PostDto> uploadedPost = postService.getUploadedPost(user, 0);
-//		assertEquals(0, uploadedPost.size());
-//		
-//	}
-//
-//	@Test
-//	public void getUploadedPostForNonEmptyList() {
-//		when(postDao.findAllByUserAndRecordStatus(user,true, PageRequest.of(0, 10))).thenReturn(posts);
-//		when(commentDao.findByPost(post)).thenReturn(comments);
-//		when(likeDao.countByPost(post)).thenReturn((long) 2);
-//		when(likeDao.findByPostAndUser(post, user)).thenReturn(null);
-//		when(profDao.findById(1)).thenReturn(profession);
-//		List<PostDto> uploadedPost = postService.getUploadedPost(user, 0);
-//		assertEquals(1, uploadedPost.size());
-//		
-//	}
+	@Test
+	public void getNewsFeedPost() {
+		when(postDao.findAllByRecordStatusOrderByPostIdDesc(true,PageRequest.of(0, 10))).thenReturn(posts);
+		when(commentDao.findByPost(post)).thenReturn(comments);
+		when(likeDao.countByPost(post)).thenReturn((long) 2);
+		when(likeDao.findByPostAndUser(post, user)).thenReturn(like);
+		when(profDao.findByProfessionId(1)).thenReturn(profession);
+		
+		List<PostDto> newsFeedPosts = postService.getNewsFeedPosts(user, 0);
+		
+		assertEquals(1, newsFeedPosts.size());
+		
+	}
+	@Test
+	public void getNewsFeedPostForZeroLike() {
+		when(postDao.findAllByRecordStatusOrderByPostIdDesc(true,PageRequest.of(0, 10))).thenReturn(posts);
+		when(commentDao.findByPost(post)).thenReturn(comments);
+		when(likeDao.countByPost(post)).thenReturn((long) 2);
+		when(likeDao.findByPostAndUser(post, user)).thenReturn(null);
+		when(profDao.findByProfessionId(1)).thenReturn(profession);
+		
+		List<PostDto> newsFeedPosts = postService.getNewsFeedPosts(user, 0);
+		
+		assertEquals(1, newsFeedPosts.size());
+	}
+	
+	@Test
+	public void getNewsFeedPostForEmptyList() {
+		when(postDao.findAllByRecordStatusOrderByPostIdDesc(true,PageRequest.of(0, 10))).thenReturn(new ArrayList<>());
+		List<PostDto> uploadedPost = postService.getNewsFeedPosts(user, 0);
+		assertEquals(0, uploadedPost.size());
+		
+	}
+	
+	@Test
+	public void getUploadedPostForEmptyList() {
+		when(postDao.findAllByUserAndRecordStatus(user,true, PageRequest.of(0, 10))).thenReturn(new ArrayList<>());
+		List<PostDto> uploadedPost = postService.getUploadedPost(user, 0);
+		assertEquals(0, uploadedPost.size());
+		
+	}
+
+	@Test
+	public void getUploadedPostForNonEmptyList() {
+		when(postDao.findAllByUserAndRecordStatus(user,true, PageRequest.of(0, 10))).thenReturn(posts);
+		when(commentDao.findByPost(post)).thenReturn(comments);
+		when(likeDao.countByPost(post)).thenReturn((long) 2);
+		when(likeDao.findByPostAndUser(post, user)).thenReturn(null);
+		when(profDao.findByProfessionId(1)).thenReturn(profession);
+		List<PostDto> uploadedPost = postService.getUploadedPost(user, 0);
+		assertEquals(1, uploadedPost.size());
+		
+	}
 	
 }

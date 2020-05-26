@@ -172,7 +172,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		Specialization specialization = specializationDao.findBySpecializationId(user.getSpecializationId());
 		if (specialization == null)
 			throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
-
+ 
 		SubSpecialization subSpecialization = subSpecializationDao.findBySubSpecId(user.getDetailsSpecializationId());
 		if (subSpecialization == null)
 			throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
@@ -180,7 +180,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		Grade grade = gradeDao.findByGradeId(user.getGrade());
 		if (grade == null)
 			throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
-
+ 
 //		long postCount = postDao.countByUserAndRecordStatus(user,true);
 		long followingCount = followDao.totalCountByFollowedByAndIsFollowing(user.getUserId(), true);
 		long followerCount = followDao.totalCountByUserIdAndIsFollowing(user.getUserId(), true);

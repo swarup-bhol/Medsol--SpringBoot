@@ -80,14 +80,14 @@ public class TestPasswordService {
 		assertEquals(user, changePassword);
 	}
 	
-//	@Test
-//	public void testSendMailForSuccess() {
-//		when(emailService.sentMail(user.getUserEmail(), any())).thenReturn(true);
-//		when(userDao.save(any(User.class))).thenReturn(user);
-//		boolean sendMail = passService.sendMail(user);
-//		assertEquals(true, sendMail);
-//		
-//	}
+	@Test
+	public void testSendMailForSuccess() {
+		when(emailService.sentMail(user.getUserEmail(), any())).thenReturn(true);
+		when(userDao.save(any(User.class))).thenReturn(user);
+		boolean sendMail = passService.sendMail(user);
+		assertEquals(true, sendMail);
+		
+	}
 	
 
 }

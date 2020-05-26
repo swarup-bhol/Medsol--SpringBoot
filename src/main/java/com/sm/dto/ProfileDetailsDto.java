@@ -2,7 +2,6 @@ package com.sm.dto;
 
 import java.sql.Date;
 
-import com.sm.model.User;
 
 public class ProfileDetailsDto {
 

@@ -12,6 +12,7 @@ import com.sm.dao.GradeDao;
 import com.sm.dao.ProfessionDao;
 import com.sm.dao.SpecializationDao;
 import com.sm.dao.SubSpecializationDao;
+import com.sm.model.Grade;
 import com.sm.model.Profession;
 import com.sm.model.Specialization;
 import com.sm.util.ApiResponse;
@@ -33,13 +34,13 @@ public class ProfileController {
 	@Autowired
 	SubSpecializationDao subSpecDao;
 
-	@GetMapping("/profession/all")
+	@GetMapping("/profession/all") 
 	public ApiResponse<List<Profession>> getAllProfession() {
 		return new ApiResponse<>(200, Constants.OK, professionDao.findAll());
 	}
 
 	@GetMapping("/grade/{professionId}")
-	public ApiResponse<List<Specialization>> getAllSpecialisation(@PathVariable long professionId) {
+	public ApiResponse<List<Grade>> getAllGradeOnProfession(@PathVariable long professionId) {
 		Profession profession = professionDao.findByProfessionId(professionId);
 		return new ApiResponse<>(200, Constants.OK, gradeDao.findByProfession(profession));
 	}
@@ -48,7 +49,6 @@ public class ProfileController {
 	public ApiResponse<List<Specialization>> getAllSpecialization(){
 		List<Specialization> specializations = specDao.findAll();
 		return new ApiResponse<>(200, Constants.OK, specializations);
-		
 	}
 
 	@GetMapping("/subSpec/{specId}")

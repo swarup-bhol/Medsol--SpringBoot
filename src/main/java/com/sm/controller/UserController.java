@@ -170,10 +170,10 @@ public class UserController {
 		if(! passwordDto.getPassword().equals(passwordDto.getCnfPassword()))
 			return new ApiResponse<>(402, Constants.BAD_REQUEST, passwordDto);
 		User users = userService.updatePassWord(user,passwordDto);
-		if(users == null) {
-			return new ApiResponse<>(200, Constants.PASSWORD_NOT_MATCH, "");
+		if(users == null) { 
+			return new ApiResponse<>(200, Constants.PASSWORD_NOT_MATCH, null);
 		}else {
-			return new ApiResponse<>(200, Constants.OK, user);
+			return new ApiResponse<>(200, Constants.OK, users);
 		}
 		
 	}
