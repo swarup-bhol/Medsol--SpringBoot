@@ -1,0 +1,28 @@
+spring:
+## Spring DATASOURCE (DataSourceAutoConfiguration & DataSourceProperties)  
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/medsoldb
+    username: root
+    password: password
+## Hibernate Properties
+# The SQL dialect makes Hibernate generate better SQL for the chosen database
+  jpa:          
+    properties:
+      hibernate:
+        dialect : org.hibernate.dialect.MySQL5InnoDBDialect
+
+# Hibernate ddl auto (create, create-drop, validate, update)
+    hibernate:
+      ddl-auto: update
+#Enable the multipart form data
+  devtools:
+    restart:
+      additional-paths: files
+      exclude: static/**
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+file:
+  upload-dir: C:\Users\swarupb\Documents\upload
