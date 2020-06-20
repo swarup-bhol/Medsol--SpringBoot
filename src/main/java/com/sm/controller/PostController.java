@@ -23,6 +23,7 @@ import com.sm.dao.PostDao;
 import com.sm.dao.UserDao;
 import com.sm.dto.PostDto;
 import com.sm.exception.PostNotFoundException;
+import com.sm.exception.ResourceNotFoundException;
 import com.sm.exception.UserNotFound;
 import com.sm.model.Post;
 import com.sm.model.User;
@@ -120,4 +121,12 @@ public class PostController {
 		List<PostDto>  allPost = postService.getNewsFeedPosts(user,pageNo);
 		return new ApiResponse<>(200, Constants.OK, allPost); 
 	}
+	
+	@GetMapping("/{postId}")
+	public ApiResponse<PostDto> getPostByPostId(@PathVariable long postId){
+		Post post = postDao.findByPostId(postId);
+		if(post == null) throw new ResourceNotFoundException(Constants.FILE_NOT_FOUND);
+		PostDto postDto= postService.findByPostId(post);
+		return new ApiResponse<>(200, Constants.OK, postDto);
+		}
 }

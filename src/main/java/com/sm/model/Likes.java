@@ -34,6 +34,8 @@ public class Likes {
 	@JoinColumn(name = "userId")
 	private User user;
 	
+	private long commentId;
+	
 	private boolean recordStatus;
 
 	public long getLikeId() {
@@ -67,6 +69,16 @@ public class Likes {
 
 	public void setUser(User user) {
 		this.user = user;
+	}
+	
+	
+
+	public long getCommentId() {
+		return commentId;
+	}
+
+	public void setCommentId(long commentId) {
+		this.commentId = commentId;
 	}
 
 	public boolean isRecordStatus() {

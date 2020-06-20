@@ -2,7 +2,6 @@ package com.sm.model;
 
 import java.sql.Timestamp;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -23,8 +22,10 @@ public class Comment {
 	@UpdateTimestamp
 	private Timestamp createdTime;
 	
+	private long reCommentId;
+	
 	@JsonIgnore
-	@ManyToOne(cascade={CascadeType.REMOVE})  
+	@ManyToOne 
 	@JoinColumn(name = "postId")
 	private Post post;
 	
@@ -55,6 +56,15 @@ public class Comment {
 
 	public void setCreatedTime(Timestamp createdTime) {
 		this.createdTime = createdTime;
+	}
+
+	
+	public long getReCommentId() {
+		return reCommentId;
+	}
+
+	public void setReCommentId(long reCommentId) {
+		this.reCommentId = reCommentId;
 	}
 
 	public Post getPost() {

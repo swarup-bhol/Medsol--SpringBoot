@@ -37,7 +37,8 @@ public class MedsolExceptions extends ResponseEntityExceptionHandler {
 		ApiResponse<Object> error = new ApiResponse<>(404, Constants.USER_NOT_FOUND, Constants.USER_NOT_FOUND);
 		return new ResponseEntity<Object>(error, HttpStatus.NOT_FOUND);
 	}
-
+	
+	
 	// Parent Exceptions
 	@ExceptionHandler(Exception.class)
 	public final ResponseEntity<Object> handleAllExceptions(Exception ex, WebRequest request) {
@@ -46,4 +47,5 @@ public class MedsolExceptions extends ResponseEntityExceptionHandler {
 		ApiResponse<Object> response = new ApiResponse<>(500, Constants.INTERNAL_SERVER_ERROR, details);
 		return new ResponseEntity<Object>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
+	
 }

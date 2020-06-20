@@ -20,6 +20,7 @@ import com.sm.dao.PostDao;
 import com.sm.dao.ProfessionDao;
 import com.sm.dto.CommentListDto;
 import com.sm.dto.PostDto;
+import com.sm.dto.ReplayListCommentDto;
 import com.sm.model.Comment;
 import com.sm.model.Likes;
 import com.sm.model.Post;
@@ -58,7 +59,7 @@ public class PostServiceImpl implements PostService {
 		Post post = new Post();
 		post.setPostContent(content);
 		post.setPostImgPath(uploadPath.toString());
-		post.setUser(user); 
+		post.setUser(user);
 		post.setRecordStatus(true);
 		return postdao.save(post);
 	}
@@ -100,25 +101,26 @@ public class PostServiceImpl implements PostService {
 	@Override
 	public List<PostDto> getNewsFeedPosts(User user, int pageNo) {
 
-		List<Post> posts = postdao.findAllByRecordStatusOrderByPostIdDesc(true,PageRequest.of(pageNo, 10));
+		List<Post> posts = postdao.findAllByRecordStatusOrderByPostIdDesc(true, PageRequest.of(pageNo, 10));
 		if (posts.isEmpty()) {
 			return new ArrayList<>();
 		} else {
 
-			return  preparePosts(posts,user);
+			return preparePosts(posts, user);
 		}
 	}
 
 	@Override
 	public List<PostDto> getUploadedPost(User user, int pageNo) {
-		List<Post> posts = postdao.findAllByUserAndRecordStatus(user,true, PageRequest.of(pageNo, 10));
+		List<Post> posts = postdao.findAllByUserAndRecordStatusOrderByPostIdDesc(user, true,
+				PageRequest.of(pageNo, 10));
 //		List<Post> posts = postdao.findAllByRecordStatusAndUser(user, true);
 		if (posts.isEmpty()) {
 			return new ArrayList<>();
-		} else { 
-			return  preparePosts(posts,user);
-			}
-			
+		} else {
+			return preparePosts(posts, user);
+		}
+
 	}
 
 	/**
@@ -129,18 +131,18 @@ public class PostServiceImpl implements PostService {
 	 * @param user
 	 * @return List
 	 */
-	private List<PostDto> preparePosts(List<Post> posts,User user) {
+	private List<PostDto> preparePosts(List<Post> posts, User user) {
 		List<PostDto> postDtos = new ArrayList<PostDto>();
-		
+
 		Iterator<Post> itr = posts.iterator();
 		while (itr.hasNext()) {
 			Post post = itr.next();
 			PostDto postDto = new PostDto();
-			List<Comment> comments = commentdao.findByPost(post);
+			List<Comment> comments = commentdao.findByPostAndReCommentId(post, 0);
 			long likeCount = likeDao.countByPost(post);
-			Likes likes = likeDao.findByPostAndUser(post, user);
+			Likes likes = likeDao.findByPostAndUserAndCommentId(post, user, 0);
 			Profession profession = profDao.findByProfessionId(post.getUser().getProfessionId());
-			postDto.setCommentLIst(prepareComment(comments));
+			postDto.setCommentLIst(prepareComment(comments, user));
 			postDto.setPost(post);
 			postDto.setLikeCount(likeCount);
 			postDto.setUserId(post.getUser().getUserId());
@@ -154,24 +156,100 @@ public class PostServiceImpl implements PostService {
 				postDto.setLike(likes.isRecordStatus());
 			postDtos.add(postDto);
 		}
-		return	postDtos;
-		
-	} 
-	
-	private List<CommentListDto> prepareComment(List<Comment> comments) {
-		
+		return postDtos;
+
+	}
+
+	private List<CommentListDto> prepareComment(List<Comment> comments, User user) {
+
 		Iterator<Comment> itr = comments.iterator();
 		List<CommentListDto> listDtos = new ArrayList<CommentListDto>();
-		while(itr.hasNext()) {
+		while (itr.hasNext()) {
 			Comment comt = itr.next();
 			CommentListDto dto = new CommentListDto();
 			dto.setUserId(comt.getUser().getUserId());
 			dto.setUserName(comt.getUser().getFullName());
 			dto.setCommentId(comt.getCommentId());
 			dto.setCommentedText(comt.getComment());
+			dto.setReplays(prepareReplay(comt, user));
 			dto.setCommentedTime(comt.getCreatedTime());
-			listDtos.add(dto); 
+			dto.setLikeCount(likeDao.countByCommentId(comt.getCommentId()));
+
+			Likes commentLike = likeDao.findByPostAndUserAndCommentId(comt.getPost(), user, comt.getCommentId());
+			if (commentLike != null) {
+				dto.setLike(commentLike.isRecordStatus());
+				System.out.println(commentLike.isRecordStatus());
+			} else {
+				dto.setLike(false);
+			}
+
+			listDtos.add(dto);
 		}
 		return listDtos;
 	}
+
+	private List<ReplayListCommentDto> prepareReplay(Comment comment, User user) {
+		List<ReplayListCommentDto> listCommentDtos = new ArrayList<ReplayListCommentDto>();
+		List<Comment> findByReCommentId = commentdao.findByReCommentId(comment.getCommentId());
+		Iterator<Comment> iterator = findByReCommentId.iterator();
+		while (iterator.hasNext()) {
+			Comment next = iterator.next();
+			ReplayListCommentDto commentDto = new ReplayListCommentDto();
+			commentDto.setCommentedText(next.getComment());
+			commentDto.setCommentId(next.getCommentId());
+			commentDto.setUserId(next.getUser().getUserId());
+			commentDto.setUserName(next.getUser().getFullName());
+			commentDto.setCommentedTime(next.getCreatedTime());
+			commentDto.setLikeCount(likeDao.countByCommentId(comment.getCommentId()));
+			Likes commentLike = likeDao.findByPostAndUserAndCommentId(comment.getPost(), user, comment.getCommentId());
+			if (commentLike != null) {
+				commentDto.setLike(commentLike.isRecordStatus());
+			} else {
+				commentDto.setLike(false);
+			}
+
+			listCommentDtos.add(commentDto);
+		}
+		return listCommentDtos;
+	}
+
+//	private List<ReplayListCommentDto> prepareReplay(Comment comment){
+//		List<ReplayListCommentDto> listCommentDtos =  new ArrayList<ReplayListCommentDto>();
+//		List<ReComment> replayComments = reCommentDao.findByComment(comment);
+//		Iterator<ReComment> iterator = replayComments.iterator();
+//		while(iterator.hasNext()) {
+//			ReComment next = iterator.next();
+//			ReplayListCommentDto commentDto = new ReplayListCommentDto();
+//			commentDto.setCommentedText(next.getReComment());
+//			commentDto.setCommentId(next.getReCommentId());
+//			commentDto.setUserId(next.getUser().getUserId());
+//			commentDto.setUserName(next.getUser().getFullName());
+//			commentDto.setCommentedTime(next.getCreatedTime());
+//			listCommentDtos.add(commentDto);
+//		}
+//		return listCommentDtos;
+//	}
+
+	@Override
+	public PostDto findByPostId(Post post) {
+		PostDto postDto = new PostDto();
+		List<Comment> comments = commentdao.findByPostAndReCommentId(post, 0);
+		long likeCount = likeDao.countByPost(post);
+		Likes likes = likeDao.findByPostAndUserAndCommentId(post, post.getUser(), 0);
+		Profession profession = profDao.findByProfessionId(post.getUser().getProfessionId());
+		postDto.setCommentLIst(prepareComment(comments, post.getUser()));
+		postDto.setPost(post);
+		postDto.setLikeCount(likeCount);
+		postDto.setUserId(post.getUser().getUserId());
+		postDto.setFullName(post.getUser().getFullName());
+		postDto.setInstituteName(post.getUser().getInstituteName());
+		postDto.setCommentCount(comments.size());
+		postDto.setProfession(profession.getProfessionName());
+		if (likes == null)
+			postDto.setLike(false);
+		else
+			postDto.setLike(likes.isRecordStatus());
+		return postDto;
+	}
+
 }

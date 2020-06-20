@@ -38,6 +38,8 @@ public interface UserService {
 	User createProfile(Profile profile, User user);
 
 	List<SuggetionsDto> searchUser(String name,long userId);
+
+	User uploadDocument(MultipartFile file, User user) throws IOException;
 	
 	
 }

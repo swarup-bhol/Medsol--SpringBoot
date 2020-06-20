@@ -19,5 +19,6 @@ public interface PostService  {
 	public Post updateMedia(Post post, String content, MultipartFile file) throws IOException;
 	public List<PostDto> getNewsFeedPosts(User user, int pageNo);
 	public List<PostDto> getUploadedPost(User user, int pageNo);
+	public PostDto findByPostId(Post post);
 	
 }

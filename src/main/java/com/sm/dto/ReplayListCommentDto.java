@@ -1,18 +1,15 @@
 package com.sm.dto;
 
 import java.sql.Timestamp;
-import java.util.List;
 
-public class CommentListDto {
-
+public class ReplayListCommentDto {
 	private long userId;
 	private String userName;
 	private long commentId;
 	private String commentedText;
+	private Timestamp commentedTime;
 	private long likeCount;
 	private boolean isLike;
-	private List<ReplayListCommentDto> replays;
-	private Timestamp commentedTime;
 
 	public long getUserId() {
 		return userId;
@@ -45,26 +42,6 @@ public class CommentListDto {
 	public void setCommentedText(String commentedText) {
 		this.commentedText = commentedText;
 	}
-	
-	
-
-	public boolean isLike() {
-		return isLike;
-	}
-
-	public void setLike(boolean isLike) {
-		this.isLike = isLike;
-	}
-	
-	
-
-	public long getLikeCount() {
-		return likeCount;
-	}
-
-	public void setLikeCount(long likeCount) {
-		this.likeCount = likeCount;
-	}
 
 	public Timestamp getCommentedTime() {
 		return commentedTime;
@@ -74,13 +51,20 @@ public class CommentListDto {
 		this.commentedTime = commentedTime;
 	}
 
-	public List<ReplayListCommentDto> getReplays() {
-		return replays;
+	public long getLikeCount() {
+		return likeCount;
 	}
 
-	public void setReplays(List<ReplayListCommentDto> replays) {
-		this.replays = replays;
+	public void setLikeCount(long likeCount) {
+		this.likeCount = likeCount;
 	}
-	
+
+	public boolean isLike() {
+		return isLike;
+	}
+
+	public void setLike(boolean isLike) {
+		this.isLike = isLike;
+	}
 
 }

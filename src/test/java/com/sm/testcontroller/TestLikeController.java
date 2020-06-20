@@ -59,7 +59,7 @@ public class TestLikeController {
 	public void testCreateLikeForPostException() {
 		when(postDao.findByPostId(1)).thenReturn(null);
 		try {
-			likeController.createLike(1, 1);
+			likeController.createPostLike(1, 1);
 		}catch (Exception e) {
 			String message = "Resource not found";
 			assertEquals(message, e.getMessage());
@@ -71,7 +71,7 @@ public class TestLikeController {
 		when(postDao.findByPostId(1)).thenReturn(post);
 		when(userDao.findByUserId(1)).thenReturn(null);
 		try {
-			likeController.createLike(1, 1);
+			likeController.createPostLike(1, 1);
 		}catch (Exception e) {
 			String message = "User Not Found";
 			assertEquals(message, e.getMessage());
@@ -82,7 +82,7 @@ public class TestLikeController {
 		when(postDao.findByPostId(1)).thenReturn(post);
 		when(userDao.findByUserId(1)).thenReturn(user);
 		when(likeService.createNewLike(user, post)).thenReturn(like);
-			ApiResponse<Likes> createLike = likeController.createLike(1, 1);
+			ApiResponse<Likes> createLike = likeController.createPostLike(1, 1);
 			assertEquals(like, createLike.getResult());
 	}
 	@Test

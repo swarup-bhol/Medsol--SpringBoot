@@ -48,7 +48,7 @@ public class TestLikeService {
 	}
 	@Test
 	public void testCreateNewLikeForExisting() {
-		when(likeDao.findByPostAndUser(post, user)).thenReturn(like);	
+		when(likeDao.findByPostAndUserAndCommentId(post, user,0)).thenReturn(like);	
 		when(likeDao.save(like)).thenReturn(like);
 		Likes newLike = likeService.createNewLike(user, post);
 		assertEquals(like, newLike);
@@ -57,7 +57,7 @@ public class TestLikeService {
 	}
 	@Test
 	public void testCreateNewLike() {
-		when(likeDao.findByPostAndUser(post, user)).thenReturn(null);	
+		when(likeDao.findByPostAndUserAndCommentId(post, user,0)).thenReturn(null);	
 		when(likeDao.save(any(Likes.class))).thenReturn(like);
 		Likes newLike = likeService.createNewLike(user, post);
 		assertEquals(like, newLike);
@@ -67,7 +67,7 @@ public class TestLikeService {
 	
 	@Test
 	public void testUpdateUnlike() {
-		when(likeDao.findByPostAndUser(post, user)).thenReturn(like);
+		when(likeDao.findByPostAndUserAndCommentId(post, user,0)).thenReturn(like);
 		when(likeDao.save(like)).thenReturn(like);
 		
 		Likes newLike = likeService.updateUnlike(user, post);
@@ -76,7 +76,7 @@ public class TestLikeService {
 	}
 	@Test
 	public void testUpdateUnlikeForNullValue() {
-		when(likeDao.findByPostAndUser(post, user)).thenReturn(null);		
+		when(likeDao.findByPostAndUserAndCommentId(post, user,0)).thenReturn(null);		
 		Likes newLike = likeService.updateUnlike(user, post);
 		assertEquals(null, newLike);
 		

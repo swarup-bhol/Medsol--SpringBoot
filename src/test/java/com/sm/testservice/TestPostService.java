@@ -119,9 +119,9 @@ public class TestPostService {
 	@Test
 	public void getNewsFeedPost() {
 		when(postDao.findAllByRecordStatusOrderByPostIdDesc(true,PageRequest.of(0, 10))).thenReturn(posts);
-		when(commentDao.findByPost(post)).thenReturn(comments);
+		when(commentDao.findByPostAndReCommentId(post,0)).thenReturn(comments);
 		when(likeDao.countByPost(post)).thenReturn((long) 2);
-		when(likeDao.findByPostAndUser(post, user)).thenReturn(like);
+		when(likeDao.findByPostAndUserAndCommentId(post, user,0)).thenReturn(like);
 		when(profDao.findByProfessionId(1)).thenReturn(profession);
 		
 		List<PostDto> newsFeedPosts = postService.getNewsFeedPosts(user, 0);
@@ -132,9 +132,9 @@ public class TestPostService {
 	@Test
 	public void getNewsFeedPostForZeroLike() {
 		when(postDao.findAllByRecordStatusOrderByPostIdDesc(true,PageRequest.of(0, 10))).thenReturn(posts);
-		when(commentDao.findByPost(post)).thenReturn(comments);
+		when(commentDao.findByPostAndReCommentId(post,0)).thenReturn(comments);
 		when(likeDao.countByPost(post)).thenReturn((long) 2);
-		when(likeDao.findByPostAndUser(post, user)).thenReturn(null);
+		when(likeDao.findByPostAndUserAndCommentId(post, user,0)).thenReturn(null);
 		when(profDao.findByProfessionId(1)).thenReturn(profession);
 		
 		List<PostDto> newsFeedPosts = postService.getNewsFeedPosts(user, 0);
@@ -152,7 +152,7 @@ public class TestPostService {
 	
 	@Test
 	public void getUploadedPostForEmptyList() {
-		when(postDao.findAllByUserAndRecordStatus(user,true, PageRequest.of(0, 10))).thenReturn(new ArrayList<>());
+		when(postDao.findAllByUserAndRecordStatusOrderByPostIdDesc(user,true, PageRequest.of(0, 10))).thenReturn(new ArrayList<>());
 		List<PostDto> uploadedPost = postService.getUploadedPost(user, 0);
 		assertEquals(0, uploadedPost.size());
 		
@@ -160,10 +160,10 @@ public class TestPostService {
 
 	@Test
 	public void getUploadedPostForNonEmptyList() {
-		when(postDao.findAllByUserAndRecordStatus(user,true, PageRequest.of(0, 10))).thenReturn(posts);
-		when(commentDao.findByPost(post)).thenReturn(comments);
+		when(postDao.findAllByUserAndRecordStatusOrderByPostIdDesc(user,true, PageRequest.of(0, 10))).thenReturn(posts);
+		when(commentDao.findByPostAndReCommentId(post,0)).thenReturn(comments);
 		when(likeDao.countByPost(post)).thenReturn((long) 2);
-		when(likeDao.findByPostAndUser(post, user)).thenReturn(null);
+		when(likeDao.findByPostAndUserAndCommentId(post, user,0)).thenReturn(null);
 		when(profDao.findByProfessionId(1)).thenReturn(profession);
 		List<PostDto> uploadedPost = postService.getUploadedPost(user, 0);
 		assertEquals(1, uploadedPost.size());

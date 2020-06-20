@@ -198,4 +198,22 @@ public class UserController {
 		return new ApiResponse<>(200, Constants.OK, findUsers);
 	}
 
+	@PostMapping("/user/upload/document")
+	public ApiResponse<User> uploadDocument(@RequestParam("file") MultipartFile file,@RequestParam("userId") long userId) throws IOException{
+		User user = userService.findByuserId(userId);
+		if (user == null)
+			throw new UserNotFound(Constants.USER_NOT_FOUND);
+		User updatedUser = userService.uploadDocument(file, user);
+		return new ApiResponse<>(200, Constants.CREATED, updatedUser);
+		
+	}
+	@GetMapping(value = "/user/document/{userId}", produces = { MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE })
+	public @ResponseBody byte[] getDocument(@PathVariable Long userId) throws IOException {
+		User user = userDao.findByUserId(userId);
+		if (user == null || user.getUserDocumentPath() == null)
+			return null;
+		Path uploadPath = Paths.get(user.getUserDocumentPath());
+		byte[] pic = Files.readAllBytes(uploadPath);
+		return pic;
+	}
 }

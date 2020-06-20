@@ -16,5 +16,5 @@ public interface PostDao extends JpaRepository<Post, Long>{
 	List<Post> findAllByUser(User user);
 	long countByUserAndRecordStatus(User user,boolean status);
 	List<Post> findAllByRecordStatusOrderByPostIdDesc(boolean status,Pageable page);
-	List<Post> findAllByUserAndRecordStatus(User user,boolean status, Pageable page);
+	List<Post> findAllByUserAndRecordStatusOrderByPostIdDesc(User user,boolean status, Pageable page);
 }

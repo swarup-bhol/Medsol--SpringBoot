@@ -12,7 +12,8 @@ import com.sm.model.User;
 @Repository
 public interface CommentDao extends JpaRepository<Comment, Long> {
 	Comment findByCommentId(long commentId);
-	List<Comment> findByPost(Post post);
+	List<Comment> findByPostAndReCommentId(Post post,long commentId);
+	List<Comment> findByReCommentId(long commentId);
 	List<Comment> findByUser(User user);
 	long  countByPost(Post post);
 }

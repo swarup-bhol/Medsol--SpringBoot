@@ -86,7 +86,7 @@ public class TestCommentController {
 	@Test
 	public void testGetPostComment() {
 		when(postDao.findByPostId(1)).thenReturn(post);
-		when(commentDao.findByPost(post)).thenReturn(comments);
+		when(commentDao.findByPostAndReCommentId(post,0)).thenReturn(comments);
 		ApiResponse<List<Comment>> postComment = commentController.getPostComment(1);
 		assertEquals(comments, postComment.getResult());	
 	}

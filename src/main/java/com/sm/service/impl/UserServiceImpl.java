@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -48,9 +49,11 @@ import com.sm.util.Constants;
 public class UserServiceImpl implements UserDetailsService, UserService {
 
 	public static final String uploadingDir = System.getProperty("user.dir") + "/Uploads/ProfilePic";
+	public static final String docDir = System.getProperty("user.dir") + "/Uploads/Document";
+
 
 	@Autowired
-	private UserDao userDao;
+	UserDao userDao;
 
 	@Autowired
 	private BCryptPasswordEncoder bcryptEncoder;
@@ -151,13 +154,15 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		if (!new File(uploadingDir).exists()) {
 			new File(uploadingDir).mkdirs();
 		}
-		Path uploadPath = Paths.get(uploadingDir, file.getOriginalFilename());
+		String uniqueID = UUID.randomUUID().toString();
+		Path uploadPath = Paths.get(uploadingDir, uniqueID+file.getOriginalFilename());
 		Files.write(uploadPath, file.getBytes());
 
 		if (user.getProfilePicPath() != null) {
 			Path prevPath = Paths.get(user.getProfilePicPath());
 			Files.deleteIfExists(prevPath);
 		}
+		user.setProfilePicId(uniqueID);
 		user.setProfilePicPath(uploadPath.toString());
 		return userDao.save(user);
 	}
@@ -213,6 +218,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		if (user == null)
 			throw new UserNotFound(Constants.USER_NOT_FOUND);
 		user.setFullName(profileDto.getName());
+		user.setDateOfBirth(profileDto.getDob());
 		user.setUserMobile(profileDto.getMobileNo());
 		user.setInstituteName(profileDto.getInstitue());
 		User userData = userDao.save(user);
@@ -264,6 +270,26 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 			suggetionsDtos.add(suggetionsDto);
 		}
 		return suggetionsDtos;
+	}
+
+	@Override
+	public User uploadDocument(MultipartFile file, User user) throws IOException {
+		if (!new File(docDir).exists()) {
+			new File(docDir).mkdirs();
+		}
+		String uniqueID = UUID.randomUUID().toString();
+		Path uploadPath = Paths.get(docDir, uniqueID+file.getOriginalFilename());
+		Files.write(uploadPath, file.getBytes());
+
+		if (user.getUserDocumentPath() != null) {
+			Path prevPath = Paths.get(user.getUserDocumentPath());
+			Files.deleteIfExists(prevPath);
+		}
+		
+		user.setUserDocumentPath(uploadPath.toString());
+		user.setDocumentId(uniqueID);
+		return userDao.save(user);
+//		return user;
 	}
 
 }
