@@ -2,7 +2,6 @@ package com.sm.model;
 
 import java.sql.Timestamp;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -25,12 +24,12 @@ public class Likes {
 	private Timestamp likeTime;
 	
 	@JsonIgnore
-	@ManyToOne(cascade={CascadeType.REMOVE})  
+	@ManyToOne  
 	@JoinColumn(name = "postId")
 	private Post post;
 	
 	@JsonIgnore
-	@ManyToOne(cascade={CascadeType.REMOVE})  
+	@ManyToOne 
 	@JoinColumn(name = "userId")
 	private User user;
 	

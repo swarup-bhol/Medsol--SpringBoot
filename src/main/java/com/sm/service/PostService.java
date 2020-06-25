@@ -4,6 +4,7 @@ package com.sm.service;
 import java.io.IOException;
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,5 +21,6 @@ public interface PostService  {
 	public List<PostDto> getNewsFeedPosts(User user, int pageNo);
 	public List<PostDto> getUploadedPost(User user, int pageNo);
 	public PostDto findByPostId(Post post);
+	public ResponseEntity<byte[]> prepareContent(long postId, String httpRangeList);
 	
 }

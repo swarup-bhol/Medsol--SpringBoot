@@ -16,8 +16,20 @@ public class Constants {
 	public static final String INTERNAL_SERVER_ERROR = "Internal Server Error";
 	public static final String RESOURCE_NOT_FOUND = "Resource not found";
 	public static final String DELETED = "Resource Deleted";
-	public static final String BAD_REQUEST ="Bad request";
-	public static final String UNAUTHORIZED ="Unauthorized access";
-	public static final String PASSWORD_NOT_MATCH="Password Not Matcing";
-	public static final String EMAIL_NOT_SENT ="Email Not Sent";
+	public static final String BAD_REQUEST = "Bad request";
+	public static final String UNAUTHORIZED = "Unauthorized access";
+	public static final String PASSWORD_NOT_MATCH = "Password Not Matcing";
+	public static final String EMAIL_NOT_SENT = "Email Not Sent";
+	
+	public static final String INVALID_FILE_FORMAT ="Invalid file format";
+
+	public static final String VIDEO = "/video";
+
+	public static final String CONTENT_TYPE = "Content-Type";
+	public static final String CONTENT_LENGTH = "Content-Length";
+	public static final String VIDEO_CONTENT = "video/";
+	public static final String CONTENT_RANGE = "Content-Range";
+	public static final String ACCEPT_RANGES = "Accept-Ranges";
+	public static final String BYTES = "bytes";
+	public static final int BYTE_RANGE = 1024;
 }

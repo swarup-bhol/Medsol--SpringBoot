@@ -1,16 +1,25 @@
 package com.sm.service.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
+import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,17 +30,23 @@ import com.sm.dao.ProfessionDao;
 import com.sm.dto.CommentListDto;
 import com.sm.dto.PostDto;
 import com.sm.dto.ReplayListCommentDto;
+import com.sm.exception.FileFormatException;
+import com.sm.exception.PostNotFoundException;
 import com.sm.model.Comment;
 import com.sm.model.Likes;
 import com.sm.model.Post;
 import com.sm.model.Profession;
 import com.sm.model.User;
 import com.sm.service.PostService;
+import com.sm.util.Constants;
 
 @Service
 public class PostServiceImpl implements PostService {
 
 	public static final String uploadingDir = System.getProperty("user.dir") + "/Uploads/Posts";
+	public static final String VideoUploadingDir = System.getProperty("user.dir") + "/Uploads/Posts/Videos";
+
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
 	PostDao postdao;
@@ -50,15 +65,31 @@ public class PostServiceImpl implements PostService {
 	 */
 	@Override
 	public Post uploadMedia(MultipartFile file, User user, String content) throws IOException {
-		if (!new File(uploadingDir).exists()) {
-			new File(uploadingDir).mkdirs();
-		}
-		Path uploadPath = Paths.get(uploadingDir, file.getOriginalFilename());
-		Files.write(uploadPath, file.getBytes());
 
+		String extentions = FilenameUtils.getExtension(file.getOriginalFilename());
 		Post post = new Post();
 		post.setPostContent(content);
-		post.setPostImgPath(uploadPath.toString());
+		if (extentions.equals("mp4") || extentions.equals("3gp") || extentions.equals("mkv")) {
+			if (!new File(VideoUploadingDir).exists()) {
+				new File(VideoUploadingDir).mkdirs();
+			}
+			Path videoUploadPath = Paths.get(VideoUploadingDir, file.getOriginalFilename());
+			Files.write(videoUploadPath, file.getBytes());
+			post.setPostVideoPath(VideoUploadingDir.toString());
+		} else if (extentions.equals("png") || extentions.equals("jpg") || extentions.equals("jpeg")
+				|| extentions.equals("webp")) {
+			if (!new File(uploadingDir).exists()) {
+				new File(uploadingDir).mkdirs();
+			}
+
+			Path uploadPath = Paths.get(uploadingDir, file.getOriginalFilename());
+			Files.write(uploadPath, file.getBytes());
+			post.setPostImgPath(uploadPath.toString());
+		} else {
+			logger.info(Constants.INVALID_FILE_FORMAT);
+			throw new FileFormatException(Constants.INVALID_FILE_FORMAT);
+		}
+
 		post.setUser(user);
 		post.setRecordStatus(true);
 		return postdao.save(post);
@@ -213,23 +244,6 @@ public class PostServiceImpl implements PostService {
 		return listCommentDtos;
 	}
 
-//	private List<ReplayListCommentDto> prepareReplay(Comment comment){
-//		List<ReplayListCommentDto> listCommentDtos =  new ArrayList<ReplayListCommentDto>();
-//		List<ReComment> replayComments = reCommentDao.findByComment(comment);
-//		Iterator<ReComment> iterator = replayComments.iterator();
-//		while(iterator.hasNext()) {
-//			ReComment next = iterator.next();
-//			ReplayListCommentDto commentDto = new ReplayListCommentDto();
-//			commentDto.setCommentedText(next.getReComment());
-//			commentDto.setCommentId(next.getReCommentId());
-//			commentDto.setUserId(next.getUser().getUserId());
-//			commentDto.setUserName(next.getUser().getFullName());
-//			commentDto.setCommentedTime(next.getCreatedTime());
-//			listCommentDtos.add(commentDto);
-//		}
-//		return listCommentDtos;
-//	}
-
 	@Override
 	public PostDto findByPostId(Post post) {
 		PostDto postDto = new PostDto();
@@ -251,5 +265,107 @@ public class PostServiceImpl implements PostService {
 			postDto.setLike(likes.isRecordStatus());
 		return postDto;
 	}
+
+	/**
+	 * 
+	 */
+	
+	@Override
+	public ResponseEntity<byte[]> prepareContent(long postId, String range) {
+		long rangeStart = 0;
+        long rangeEnd;
+        byte[] data;
+        Long fileSize;
+        Post post = postdao.findByPostId(postId);
+        if(post == null || post.getPostVideoPath() == null) return null;
+        
+        File file = new File(post.getPostVideoPath());
+        
+        String exttension = FilenameUtils.getExtension(post.getPostVideoPath());
+        
+        try {
+            fileSize = getFileSize(file.getAbsolutePath());
+            if (range == null) {
+                return ResponseEntity.status(HttpStatus.OK)
+                        .header(Constants.CONTENT_TYPE, Constants.VIDEO_CONTENT + exttension)
+                        .header(Constants.CONTENT_LENGTH, String.valueOf(fileSize))
+                        .body(readByteRange(file.getAbsolutePath(), rangeStart, fileSize - 1)); // Read the object and convert it as bytes
+            }
+            String[] ranges = range.split("-");
+            rangeStart = Long.parseLong(ranges[0].substring(6));
+            if (ranges.length > 1) {
+                rangeEnd = Long.parseLong(ranges[1]);
+            } else {
+                rangeEnd = fileSize - 1;
+            }
+            if (fileSize < rangeEnd) {
+                rangeEnd = fileSize - 1;
+            }
+            data = readByteRange(file.getAbsolutePath(), rangeStart, rangeEnd);
+        } catch (IOException e) {
+            logger.error("Exception while reading the file {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        String contentLength = String.valueOf((rangeEnd - rangeStart) + 1);
+        return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+                .header(Constants.CONTENT_TYPE, Constants.VIDEO_CONTENT + "mp4")
+                .header(Constants.ACCEPT_RANGES, Constants.BYTES)
+                .header(Constants.CONTENT_LENGTH, contentLength)
+                .header(Constants.CONTENT_RANGE, Constants.BYTES + " " + rangeStart + "-" + rangeEnd + "/" + fileSize)
+                .body(data);
+	}
+	   public byte[] readByteRange(String filename, long start, long end) throws IOException {
+	        Path path = Paths.get(filename);
+	        try (InputStream inputStream = (Files.newInputStream(path));
+	             ByteArrayOutputStream bufferedOutputStream = new ByteArrayOutputStream()) {
+	            byte[] data = new byte[Constants.BYTE_RANGE];
+	            int nRead;
+	            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+	                bufferedOutputStream.write(data, 0, nRead);
+	            }
+	            bufferedOutputStream.flush();
+	            byte[] result = new byte[(int) (end - start) + 1];
+	            System.arraycopy(bufferedOutputStream.toByteArray(), (int) start, result, 0, result.length);
+	            return result;
+	        }
+	    }
+
+	    /**
+	     * Get the filePath.
+	     *
+	     * @return String.
+	     */
+	    private String getFilePath() {
+	        URL url = this.getClass().getResource(Constants.VIDEO);
+	        return new File(url.getFile()).getAbsolutePath();
+	    }
+
+	    /**
+	     * Content length.
+	     *
+	     * @param fileName String.
+	     * @return Long.
+	     */
+	    public Long getFileSize(String fileName) {
+	        return Optional.ofNullable(fileName)
+	                .map(file -> Paths.get(getFilePath(), file))
+	                .map(this::sizeFromFile)
+	                .orElse(0L);
+	    }
+
+	    /**
+	     * Getting the size from the path.
+	     *
+	     * @param path Path.
+	     * @return Long.
+	     */
+	    private Long sizeFromFile(Path path) {
+	        try {
+	            return Files.size(path);
+	        } catch (IOException ioException) {
+	            logger.error("Error while getting the file size", ioException);
+	        }
+	        return 0L;
+	    }
 
 }

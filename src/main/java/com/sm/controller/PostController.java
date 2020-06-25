@@ -18,7 +18,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 import com.sm.dao.PostDao;
 import com.sm.dao.UserDao;
 import com.sm.dto.PostDto;
@@ -110,7 +113,7 @@ public class PostController {
 	public ApiResponse<List<PostDto>> getAllPostByUser(@PathVariable long userId,@PathVariable int pageNo ) {
 		User user = userService.findByuserId(userId);
 		if(user == null) throw new UserNotFound(Constants.USER_NOT_FOUND);
-		return new ApiResponse<>(200, Constants.OK, postService.getUploadedPost(user, pageNo));
+		return new ApiResponse<>(200, Constants.OK, postService.getUploadedPost(user, pageNo)); 
 		
 	}
 	
@@ -129,4 +132,11 @@ public class PostController {
 		PostDto postDto= postService.findByPostId(post);
 		return new ApiResponse<>(200, Constants.OK, postDto);
 		}
+	
+	 @GetMapping("/video/{postId}")
+	    public Mono<ResponseEntity<byte[]>> streamVideo(ServerHttpResponse serverHttpResponse, @RequestHeader(value = "Range", required = false) String httpRangeList,
+	                                                    @PathVariable long postId) {
+		    
+	        return Mono.just(postService.prepareContent(postId, httpRangeList));
+	    }
 }
