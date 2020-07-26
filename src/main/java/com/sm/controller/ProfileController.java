@@ -1,5 +1,6 @@
 package com.sm.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +13,12 @@ import com.sm.dao.GradeDao;
 import com.sm.dao.ProfessionDao;
 import com.sm.dao.SpecializationDao;
 import com.sm.dao.SubSpecializationDao;
+import com.sm.dao.UserDao;
+import com.sm.exception.UserNotFound;
 import com.sm.model.Grade;
 import com.sm.model.Profession;
 import com.sm.model.Specialization;
+import com.sm.model.User;
 import com.sm.util.ApiResponse;
 import com.sm.util.Constants;
 
@@ -33,6 +37,9 @@ public class ProfileController {
 
 	@Autowired
 	SubSpecializationDao subSpecDao;
+	
+	@Autowired
+	UserDao userDao;
 
 	@GetMapping("/profession/all") 
 	public ApiResponse<List<Profession>> getAllProfession() {
@@ -56,5 +63,16 @@ public class ProfileController {
 		Specialization specialization = specDao.findBySpecializationId(specId);
 		return new ApiResponse<>(200, Constants.OK, subSpecDao.findBySpecialization(specialization));
 	   }
+	
+	@GetMapping("/spec/{userId}")
+	public ApiResponse<List<Specialization>> getSpecializationByUserId(@PathVariable long userId){
+		User user = userDao.findByUserId(userId);
+		if(user == null) throw new UserNotFound(Constants.USER_NOT_FOUND);
+		Specialization spec = specDao.findBySpecializationId(user.getSpecializationId());
+		List<Specialization> specializations = new ArrayList<>();
+		specializations.add(spec);
+		return new ApiResponse<>(200, Constants.OK, specializations);
+		
+	}
 
 }

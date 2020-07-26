@@ -14,28 +14,37 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.FilenameUtils;
+import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sm.dao.CommentDao;
 import com.sm.dao.LikeDao;
 import com.sm.dao.PostDao;
+import com.sm.dao.PostTypeDao;
 import com.sm.dao.ProfessionDao;
+import com.sm.dao.SpecializationDao;
 import com.sm.dto.CommentListDto;
 import com.sm.dto.PostDto;
 import com.sm.dto.ReplayListCommentDto;
 import com.sm.exception.FileFormatException;
 import com.sm.exception.PostNotFoundException;
+import com.sm.exception.ResourceNotFoundException;
 import com.sm.model.Comment;
 import com.sm.model.Likes;
 import com.sm.model.Post;
+import com.sm.model.PostType;
 import com.sm.model.Profession;
+import com.sm.model.Specialization;
 import com.sm.model.User;
 import com.sm.service.PostService;
 import com.sm.util.Constants;
@@ -59,12 +68,18 @@ public class PostServiceImpl implements PostService {
 
 	@Autowired
 	ProfessionDao profDao;
+	
+	@Autowired
+	PostTypeDao postTypeDao;
+	
+	@Autowired
+	SpecializationDao specializationDao;
 
 	/**
 	 * 
 	 */
 	@Override
-	public Post uploadMedia(MultipartFile file, User user, String content) throws IOException {
+	public Post uploadMedia(MultipartFile file, User user, String content, String type) throws IOException {
 
 		String extentions = FilenameUtils.getExtension(file.getOriginalFilename());
 		Post post = new Post();
@@ -75,7 +90,7 @@ public class PostServiceImpl implements PostService {
 			}
 			Path videoUploadPath = Paths.get(VideoUploadingDir, file.getOriginalFilename());
 			Files.write(videoUploadPath, file.getBytes());
-			post.setPostVideoPath(VideoUploadingDir.toString());
+			post.setPostVideoPath(videoUploadPath.toString());
 		} else if (extentions.equals("png") || extentions.equals("jpg") || extentions.equals("jpeg")
 				|| extentions.equals("webp")) {
 			if (!new File(uploadingDir).exists()) {
@@ -92,17 +107,21 @@ public class PostServiceImpl implements PostService {
 
 		post.setUser(user);
 		post.setRecordStatus(true);
-		return postdao.save(post);
+		Post savePost = postdao.save(post);
+		updatePostType(savePost, type);
+		return savePost;
 	}
 
 	@Override
-	public Post createPost(User user, String content) {
+	public Post createPost(User user, String content, String type) {
 
 		Post post = new Post();
 		post.setPostContent(content);
 		post.setUser(user);
 		post.setRecordStatus(true);
-		return postdao.save(post);
+		Post savePost = postdao.save(post);
+		updatePostType(savePost, type);
+		return savePost;
 	}
 
 	@Override
@@ -137,6 +156,20 @@ public class PostServiceImpl implements PostService {
 			return new ArrayList<>();
 		} else {
 
+			return preparePosts(posts, user);
+		}
+	}
+	
+	@Override
+	public List<PostDto> getPostSpecType(List<Long> specList,User user,int pageNo) {
+		List<Specialization> allSpecById =  specializationDao.findBySpecializationIdIn(specList);
+		if(allSpecById.isEmpty()) {
+			throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
+		}
+		List<Post> posts= postTypeDao.findPostBySpecializationIn(allSpecById,PageRequest.of(pageNo, 10));
+		if (posts.isEmpty()) {
+			return new ArrayList<>();
+		} else {
 			return preparePosts(posts, user);
 		}
 	}
@@ -266,106 +299,87 @@ public class PostServiceImpl implements PostService {
 		return postDto;
 	}
 
-	/**
-	 * 
-	 */
-	
 	@Override
-	public ResponseEntity<byte[]> prepareContent(long postId, String range) {
+	public ResponseEntity<byte[]> prepareContent(Post post, String range) {
 		long rangeStart = 0;
-        long rangeEnd;
-        byte[] data;
-        Long fileSize;
-        Post post = postdao.findByPostId(postId);
-        if(post == null || post.getPostVideoPath() == null) return null;
-        
-        File file = new File(post.getPostVideoPath());
-        
-        String exttension = FilenameUtils.getExtension(post.getPostVideoPath());
-        
-        try {
-            fileSize = getFileSize(file.getAbsolutePath());
-            if (range == null) {
-                return ResponseEntity.status(HttpStatus.OK)
-                        .header(Constants.CONTENT_TYPE, Constants.VIDEO_CONTENT + exttension)
-                        .header(Constants.CONTENT_LENGTH, String.valueOf(fileSize))
-                        .body(readByteRange(file.getAbsolutePath(), rangeStart, fileSize - 1)); // Read the object and convert it as bytes
-            }
-            String[] ranges = range.split("-");
-            rangeStart = Long.parseLong(ranges[0].substring(6));
-            if (ranges.length > 1) {
-                rangeEnd = Long.parseLong(ranges[1]);
-            } else {
-                rangeEnd = fileSize - 1;
-            }
-            if (fileSize < rangeEnd) {
-                rangeEnd = fileSize - 1;
-            }
-            data = readByteRange(file.getAbsolutePath(), rangeStart, rangeEnd);
-        } catch (IOException e) {
-            logger.error("Exception while reading the file {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-        String contentLength = String.valueOf((rangeEnd - rangeStart) + 1);
-        return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-                .header(Constants.CONTENT_TYPE, Constants.VIDEO_CONTENT + "mp4")
-                .header(Constants.ACCEPT_RANGES, Constants.BYTES)
-                .header(Constants.CONTENT_LENGTH, contentLength)
-                .header(Constants.CONTENT_RANGE, Constants.BYTES + " " + rangeStart + "-" + rangeEnd + "/" + fileSize)
-                .body(data);
+		long rangeEnd;
+		byte[] data;
+		Long fileSize;
+
+		File file = new File(post.getPostVideoPath());
+
+		String exttension = FilenameUtils.getExtension(post.getPostVideoPath());
+
+		try {
+
+			fileSize = file.length();
+			if (range == null) {
+				return ResponseEntity.status(HttpStatus.OK)
+						.header(Constants.CONTENT_TYPE, Constants.VIDEO_CONTENT + exttension)
+						.header(Constants.CONTENT_LENGTH, String.valueOf(fileSize))
+						.body(readByteRange(file.getAbsolutePath(), rangeStart, fileSize - 1)); // Read the object and
+																								// convert it as bytes
+			}
+			String[] ranges = range.split("-");
+			rangeStart = Long.parseLong(ranges[0].substring(6));
+			if (ranges.length > 1) {
+				rangeEnd = Long.parseLong(ranges[1]);
+			} else {
+				rangeEnd = fileSize - 1;
+			}
+			if (fileSize < rangeEnd) {
+				rangeEnd = fileSize - 1;
+			}
+			data = readByteRange(file.getAbsolutePath(), rangeStart, rangeEnd);
+		} catch (IOException e) {
+			logger.error("Exception while reading the file {}", e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+		String contentLength = String.valueOf((rangeEnd - rangeStart) + 1);
+		return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+				.header(Constants.CONTENT_TYPE, Constants.VIDEO_CONTENT + "mp4")
+				.header(Constants.ACCEPT_RANGES, Constants.BYTES).header(Constants.CONTENT_LENGTH, contentLength)
+				.header(Constants.CONTENT_RANGE, Constants.BYTES + " " + rangeStart + "-" + rangeEnd + "/" + fileSize)
+				.body(data);
 	}
-	   public byte[] readByteRange(String filename, long start, long end) throws IOException {
-	        Path path = Paths.get(filename);
-	        try (InputStream inputStream = (Files.newInputStream(path));
-	             ByteArrayOutputStream bufferedOutputStream = new ByteArrayOutputStream()) {
-	            byte[] data = new byte[Constants.BYTE_RANGE];
-	            int nRead;
-	            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
-	                bufferedOutputStream.write(data, 0, nRead);
-	            }
-	            bufferedOutputStream.flush();
-	            byte[] result = new byte[(int) (end - start) + 1];
-	            System.arraycopy(bufferedOutputStream.toByteArray(), (int) start, result, 0, result.length);
-	            return result;
-	        }
-	    }
 
-	    /**
-	     * Get the filePath.
-	     *
-	     * @return String.
-	     */
-	    private String getFilePath() {
-	        URL url = this.getClass().getResource(Constants.VIDEO);
-	        return new File(url.getFile()).getAbsolutePath();
-	    }
+	private byte[] readByteRange(String filename, long start, long end) throws IOException {
+		Path path = Paths.get(filename);
+		try (InputStream inputStream = (Files.newInputStream(path));
+				ByteArrayOutputStream bufferedOutputStream = new ByteArrayOutputStream()) {
+			byte[] data = new byte[Constants.BYTE_RANGE];
+			int nRead;
+			while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+				bufferedOutputStream.write(data, 0, nRead);
+			}
+			bufferedOutputStream.flush();
+			byte[] result = new byte[(int) (end - start) + 1];
+			System.arraycopy(bufferedOutputStream.toByteArray(), (int) start, result, 0, result.length);
+			return result;
+		}
+	}
 
-	    /**
-	     * Content length.
-	     *
-	     * @param fileName String.
-	     * @return Long.
-	     */
-	    public Long getFileSize(String fileName) {
-	        return Optional.ofNullable(fileName)
-	                .map(file -> Paths.get(getFilePath(), file))
-	                .map(this::sizeFromFile)
-	                .orElse(0L);
-	    }
+	private void updatePostType(Post savePost, String type) {
+		List<Specialization> specializations = null;
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			specializations = mapper.readValue(type,
+					mapper.getTypeFactory().constructCollectionType(List.class, Specialization.class));
+			List<PostType> postTypes = new ArrayList<PostType>();
+			Iterator<Specialization> iterator = specializations.iterator();
+			while (iterator.hasNext()) {
+				PostType postType = new  PostType();
+				postType.setPost(savePost);
+				postType.setSpecialization(iterator.next());
+				postTypes.add(postType);
+			}
+			postTypeDao.saveAll(postTypes);
+		} catch (JsonProcessingException e) {
+			logger.error("Cannot convert to List  Object");
+		}
+		
 
-	    /**
-	     * Getting the size from the path.
-	     *
-	     * @param path Path.
-	     * @return Long.
-	     */
-	    private Long sizeFromFile(Path path) {
-	        try {
-	            return Files.size(path);
-	        } catch (IOException ioException) {
-	            logger.error("Error while getting the file size", ioException);
-	        }
-	        return 0L;
-	    }
+	}
 
+	
 }

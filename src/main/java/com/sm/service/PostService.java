@@ -14,13 +14,14 @@ import com.sm.model.User;
 
 @Service
 public interface PostService  {
-	public Post uploadMedia(MultipartFile file, User user,String content) throws IOException;
-	public Post createPost(User user,String content);
+	public Post uploadMedia(MultipartFile file, User user,String content, String specialization) throws IOException;
+	public Post createPost(User user,String content, String specialization);
 	public Post getPostById(long postId);
 	public Post updateMedia(Post post, String content, MultipartFile file) throws IOException;
 	public List<PostDto> getNewsFeedPosts(User user, int pageNo);
 	public List<PostDto> getUploadedPost(User user, int pageNo);
 	public PostDto findByPostId(Post post);
-	public ResponseEntity<byte[]> prepareContent(long postId, String httpRangeList);
+	public ResponseEntity<byte[]> prepareContent(Post post, String httpRangeList);
+	public List<PostDto> getPostSpecType(List<Long> specList, User user, int pageNo);
 	
 }

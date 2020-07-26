@@ -3,6 +3,7 @@ package com.sm.config;
 import javax.annotation.Resource;
 
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -52,7 +53,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		http.csrf().disable().authorizeRequests()
 				.antMatchers("/api/medsol/v1/*", "/api/medsol/v1/profile/create/*","/api/medsol/v1/profilePic/*","/upload/img/**", "/api/medsol/profession/**",
-						"/api/medsol/profile/**","/api/medsol/posts/img/*","/api/medsol/password/**","/api/medsol/v1/user/upload/document","/api/medsol/v1/user/document/*","/api/medsol/v1/upload/profilePic/*","/api/medsol/posts/video/*")
+						"/api/medsol/profile/**","/api/medsol/posts/img/*","/api/medsol/password/**","/api/medsol/v1/user/upload/document","/api/medsol/v1/user/document/*","/api/medsol/v1/upload/profilePic/*","/api/medsol/posts/video/**")
 				.permitAll().anyRequest().authenticated().and().exceptionHandling()
 				.authenticationEntryPoint(unauthorizedHandler).and().sessionManagement()
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
@@ -77,4 +78,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             }
         };
     }
+	
+	
+
 }

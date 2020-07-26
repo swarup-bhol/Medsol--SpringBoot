@@ -8,6 +8,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -29,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	@Autowired
 	private JwtTokenUtil jwtTokenUtil;
+	
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
@@ -44,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			} catch (IllegalArgumentException e) {
 				logger.error("an error occured during getting username from token", e);
 			} catch (ExpiredJwtException e) {
-				logger.warn("the token is expired and not valid anymore", e);
+				logger.warn("the token is expired and not valid anymore");
 			} catch (SignatureException e) {
 				logger.error("Authentication Failed. Username or Password not valid.");
 			}

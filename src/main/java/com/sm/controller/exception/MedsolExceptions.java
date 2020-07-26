@@ -1,7 +1,6 @@
 package com.sm.controller.exception;
 
-import java.util.ArrayList;
-import java.util.List;
+
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +14,8 @@ import com.sm.exception.UnautorizedAccess;
 import com.sm.exception.UserNotFound;
 import com.sm.util.ApiResponse;
 import com.sm.util.Constants;
+
+import io.jsonwebtoken.ExpiredJwtException;
 
 @ControllerAdvice
 public class MedsolExceptions extends ResponseEntityExceptionHandler {
@@ -37,15 +38,16 @@ public class MedsolExceptions extends ResponseEntityExceptionHandler {
 		ApiResponse<Object> error = new ApiResponse<>(404, Constants.USER_NOT_FOUND, Constants.USER_NOT_FOUND);
 		return new ResponseEntity<Object>(error, HttpStatus.NOT_FOUND);
 	}
-	
-	
-	// Parent Exceptions
-	@ExceptionHandler(Exception.class)
-	public final ResponseEntity<Object> handleAllExceptions(Exception ex, WebRequest request) {
-		List<String> details = new ArrayList<>();
-		details.add(ex.getLocalizedMessage());
-		ApiResponse<Object> response = new ApiResponse<>(500, Constants.INTERNAL_SERVER_ERROR, details);
-		return new ResponseEntity<Object>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+
+	public final ResponseEntity<Object> handelJwtTokenExpireException(ExpiredJwtException ex, WebRequest webRequest){
+		ApiResponse<Object> error = new ApiResponse<>(404, Constants.TOKEN_EXPIRE, Constants.TOKEN_EXPIRE);
+		return new ResponseEntity<Object>(error, HttpStatus.UNAUTHORIZED);
 	}
 	
-}
+	// Parent Exceptions 
+	@ExceptionHandler(Exception.class)
+	public final ResponseEntity<Object> handleAllExceptions(Exception ex, WebRequest request) {
+		return new ResponseEntity<Object>(ex, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
+} 
