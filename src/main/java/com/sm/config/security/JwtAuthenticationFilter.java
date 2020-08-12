@@ -53,6 +53,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		} else {
 			logger.warn("couldn't find bearer string, will ignore the header");
 		}
+		
 		if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
 			UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -68,13 +69,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		res.setHeader("Access-Control-Allow-Origin", "*");
         res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS");
 	    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Accept-Encoding, Accept-Language, Host, Referer, Connection, User-Agent, authorization, sw-useragent, sw-version");
-
+         System.out.println(req.getRequestURI());
 		// Just REPLY OK if request method is OPTIONS for CORS (pre-flight)
 		if ( req.getMethod().equals("OPTIONS") ) {
         res.setStatus(HttpServletResponse.SC_OK);
         return;
 		}
-
+        
 		chain.doFilter(req, res);
 	}
 }

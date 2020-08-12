@@ -69,6 +69,7 @@ public class UserController {
 		}
 		return new ApiResponse<>(409, Constants.USER_EXIST, user);
 	}
+
 	/**
 	 *
 	 * @author swarup
@@ -76,7 +77,7 @@ public class UserController {
 	 * @purpose login an user
 	 * 
 	 * @param loginUser
-	 * @return 
+	 * @return
 	 * @throws AuthenticationException
 	 * @throws InvalidUserNamePasswordException
 	 */
@@ -85,15 +86,15 @@ public class UserController {
 			throws AuthenticationException, InvalidUserNamePasswordException {
 		if (loginUser == null) {
 			return new ApiResponse<>(401, Constants.INVALID_CREDENTIALS, true);
-		}else {
-			
-		boolean result = userService.loginUser(loginUser);
-		if (result) {
-			final User user = userService.findOne(loginUser.getEmail());
-			final String token = jwtTokenUtil.generateToken(user);
-			return new ApiResponse<>(200, Constants.OK, new JwtToken(token, user.getUserEmail(), user.getUserId()));
-		}
-		return new ApiResponse<>(400, Constants.INVALID_CREDENTIALS, loginUser);
+		} else {
+
+			boolean result = userService.loginUser(loginUser);
+			if (result) {
+				final User user = userService.findOne(loginUser.getEmail());
+				final String token = jwtTokenUtil.generateToken(user);
+				return new ApiResponse<>(200, Constants.OK, new JwtToken(token, user.getUserEmail(), user.getUserId()));
+			}
+			return new ApiResponse<>(400, Constants.INVALID_CREDENTIALS, loginUser);
 		}
 	}
 
@@ -106,11 +107,12 @@ public class UserController {
 	 * @return
 	 */
 	@PostMapping("/profile/create/{email}")
-	public  ApiResponse<JwtToken> createProfile(@RequestBody Profile profile, @PathVariable String email) {
+	public ApiResponse<JwtToken> createProfile(@RequestBody Profile profile, @PathVariable String email) {
 		User user = userDao.findByUserEmail(email);
 		if (user == null)
 			throw new UserNotFound(Constants.USER_NOT_FOUND);
-		if(user.isRecordStatus()) return new ApiResponse<>(409, Constants.USER_EXIST, profile);
+		if (user.isRecordStatus())
+			return new ApiResponse<>(409, Constants.USER_EXIST, profile);
 		User updatedUser = userService.createProfile(profile, user);
 		final String token = jwtTokenUtil.generateToken(user);
 		return new ApiResponse<>(200, Constants.OK,
@@ -120,7 +122,7 @@ public class UserController {
 	/**
 	 * @author swarup bhol
 	 *
-	 * @purpose  upload profile picture
+	 * @purpose upload profile picture
 	 *
 	 *
 	 * @param file
@@ -150,63 +152,67 @@ public class UserController {
 	@GetMapping(value = "/profilePic/{userId}", produces = { MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE })
 	public @ResponseBody byte[] getClassPath(@PathVariable Long userId) throws IOException {
 		User user = userDao.findByUserId(userId);
-		if (user == null || user.getProfilePicPath() == null)
+		if (user == null || user.getProfilePicPath() == null || user.getProfilePicPath().equals("0"))
 			return null;
 		Path uploadPath = Paths.get(user.getProfilePicPath());
 		byte[] pic = Files.readAllBytes(uploadPath);
 		return pic;
 	}
-	
+
 	@PutMapping("/update/profile/{userId}")
-	public ApiResponse<ProfileDetailsDto> updateProfileDetails(@RequestBody UpdateProfileDto profileDto,@PathVariable long userId){
-		ProfileDetailsDto updateProfile = userService.updateProfile(userId,profileDto);
+	public ApiResponse<ProfileDetailsDto> updateProfileDetails(@RequestBody UpdateProfileDto profileDto,
+			@PathVariable long userId) {
+		ProfileDetailsDto updateProfile = userService.updateProfile(userId, profileDto);
 		return new ApiResponse<>(200, Constants.OK, updateProfile);
 	}
-	
+
 	@PutMapping("/update/password/{userId}")
-	public ApiResponse<User> resetPassword(@RequestBody PasswordDto passwordDto,@PathVariable long userId){
+	public ApiResponse<User> resetPassword(@RequestBody PasswordDto passwordDto, @PathVariable long userId) {
 		User user = userDao.findByUserId(userId);
-		if(user == null) throw new UserNotFound(Constants.USER_NOT_FOUND);
-		if(! passwordDto.getPassword().equals(passwordDto.getCnfPassword()))
+		if (user == null)
+			throw new UserNotFound(Constants.USER_NOT_FOUND);
+		if (!passwordDto.getPassword().equals(passwordDto.getCnfPassword()))
 			return new ApiResponse<>(402, Constants.BAD_REQUEST, passwordDto);
-		User users = userService.updatePassWord(user,passwordDto);
-		if(users == null) { 
+		User users = userService.updatePassWord(user, passwordDto);
+		if (users == null) {
 			return new ApiResponse<>(200, Constants.PASSWORD_NOT_MATCH, null);
-		}else {
+		} else {
 			return new ApiResponse<>(200, Constants.OK, users);
 		}
-		
+
 	}
-	
+
 	/**
 	 * 
 	 * @param userId
 	 * @return
 	 */
 	@GetMapping("profile/{userId}")
-	public ApiResponse<ProfileDetailsDto> getprofileDetails(@PathVariable long userId){
+	public ApiResponse<ProfileDetailsDto> getprofileDetails(@PathVariable long userId) {
 		User user = userDao.findByUserId(userId);
-		if(user == null) throw  new UserNotFound(Constants.USER_NOT_FOUND);
-		ProfileDetailsDto  detailsDto = userService.getProfileDetails(user);
+		if (user == null)
+			throw new UserNotFound(Constants.USER_NOT_FOUND);
+		ProfileDetailsDto detailsDto = userService.getProfileDetails(user);
 		return new ApiResponse<>(200, Constants.OK, detailsDto);
 	}
-	
-	
+
 	@GetMapping("/user/findBy/{userId}/{name}")
-	public ApiResponse<List<SuggetionsDto>> searchUser(@PathVariable long userId,@PathVariable String name){
+	public ApiResponse<List<SuggetionsDto>> searchUser(@PathVariable long userId, @PathVariable String name) {
 		List<SuggetionsDto> findUsers = userService.searchUser(name, userId);
 		return new ApiResponse<>(200, Constants.OK, findUsers);
 	}
 
 	@PostMapping("/user/upload/document")
-	public ApiResponse<User> uploadDocument(@RequestParam("file") MultipartFile file,@RequestParam("userId") long userId) throws IOException{
+	public ApiResponse<User> uploadDocument(@RequestParam("file") MultipartFile file,
+			@RequestParam("userId") long userId) throws IOException {
 		User user = userService.findByuserId(userId);
 		if (user == null)
 			throw new UserNotFound(Constants.USER_NOT_FOUND);
 		User updatedUser = userService.uploadDocument(file, user);
 		return new ApiResponse<>(200, Constants.CREATED, updatedUser);
-		
+
 	}
+
 	@GetMapping(value = "/user/document/{userId}", produces = { MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE })
 	public @ResponseBody byte[] getDocument(@PathVariable Long userId) throws IOException {
 		User user = userDao.findByUserId(userId);

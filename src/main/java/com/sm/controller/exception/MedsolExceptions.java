@@ -45,9 +45,9 @@ public class MedsolExceptions extends ResponseEntityExceptionHandler {
 	}
 	
 	// Parent Exceptions 
-	@ExceptionHandler(Exception.class)
-	public final ResponseEntity<Object> handleAllExceptions(Exception ex, WebRequest request) {
-		return new ResponseEntity<Object>(ex, HttpStatus.INTERNAL_SERVER_ERROR);
-	}
+//	@ExceptionHandler(Exception.class)
+//	public final ResponseEntity<Object> handleAllExceptions(Exception ex, WebRequest request) {
+//		return new ResponseEntity<Object>(ex, HttpStatus.INTERNAL_SERVER_ERROR);
+//	}
 	
 } 

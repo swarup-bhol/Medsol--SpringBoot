@@ -1,6 +1,10 @@
 package com.sm.controller;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +19,16 @@ public class NotificationController {
 
 	@Autowired
 	NotificationService notificationservice;
+	
+	@Autowired
+    private SimpMessagingTemplate template;
+
+    
+    @GetMapping("/sendNotification")
+    public String sendNotification() {
+    	template.convertAndSendToUser("swarup", "/reply", "swarup");
+    	return "Notification send succefully";
+    }
 	
 	@GetMapping("/api/medsol/notification/new/{userId}")
 	public ApiResponse<Notification> getNotification(@PathVariable long userId){

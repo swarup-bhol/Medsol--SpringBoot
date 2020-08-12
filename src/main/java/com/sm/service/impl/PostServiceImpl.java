@@ -1,9 +1,12 @@
 package com.sm.service.impl;
 
+import static java.lang.Math.min;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,12 +17,18 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileUrlResource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.support.ResourceRegion;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.stereotype.Service;
@@ -54,6 +63,7 @@ public class PostServiceImpl implements PostService {
 
 	public static final String uploadingDir = System.getProperty("user.dir") + "/Uploads/Posts";
 	public static final String VideoUploadingDir = System.getProperty("user.dir") + "/Uploads/Posts/Videos";
+	private static final long CHUNK_SIZE = 1000000L;
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -299,65 +309,7 @@ public class PostServiceImpl implements PostService {
 		return postDto;
 	}
 
-	@Override
-	public ResponseEntity<byte[]> prepareContent(Post post, String range) {
-		long rangeStart = 0;
-		long rangeEnd;
-		byte[] data;
-		Long fileSize;
-
-		File file = new File(post.getPostVideoPath());
-
-		String exttension = FilenameUtils.getExtension(post.getPostVideoPath());
-
-		try {
-
-			fileSize = file.length();
-			if (range == null) {
-				return ResponseEntity.status(HttpStatus.OK)
-						.header(Constants.CONTENT_TYPE, Constants.VIDEO_CONTENT + exttension)
-						.header(Constants.CONTENT_LENGTH, String.valueOf(fileSize))
-						.body(readByteRange(file.getAbsolutePath(), rangeStart, fileSize - 1)); // Read the object and
-																								// convert it as bytes
-			}
-			String[] ranges = range.split("-");
-			rangeStart = Long.parseLong(ranges[0].substring(6));
-			if (ranges.length > 1) {
-				rangeEnd = Long.parseLong(ranges[1]);
-			} else {
-				rangeEnd = fileSize - 1;
-			}
-			if (fileSize < rangeEnd) {
-				rangeEnd = fileSize - 1;
-			}
-			data = readByteRange(file.getAbsolutePath(), rangeStart, rangeEnd);
-		} catch (IOException e) {
-			logger.error("Exception while reading the file {}", e.getMessage());
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
-		String contentLength = String.valueOf((rangeEnd - rangeStart) + 1);
-		return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-				.header(Constants.CONTENT_TYPE, Constants.VIDEO_CONTENT + "mp4")
-				.header(Constants.ACCEPT_RANGES, Constants.BYTES).header(Constants.CONTENT_LENGTH, contentLength)
-				.header(Constants.CONTENT_RANGE, Constants.BYTES + " " + rangeStart + "-" + rangeEnd + "/" + fileSize)
-				.body(data);
-	}
-
-	private byte[] readByteRange(String filename, long start, long end) throws IOException {
-		Path path = Paths.get(filename);
-		try (InputStream inputStream = (Files.newInputStream(path));
-				ByteArrayOutputStream bufferedOutputStream = new ByteArrayOutputStream()) {
-			byte[] data = new byte[Constants.BYTE_RANGE];
-			int nRead;
-			while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
-				bufferedOutputStream.write(data, 0, nRead);
-			}
-			bufferedOutputStream.flush();
-			byte[] result = new byte[(int) (end - start) + 1];
-			System.arraycopy(bufferedOutputStream.toByteArray(), (int) start, result, 0, result.length);
-			return result;
-		}
-	}
+	
 
 	private void updatePostType(Post savePost, String type) {
 		List<Specialization> specializations = null;
@@ -381,5 +333,42 @@ public class PostServiceImpl implements PostService {
 
 	}
 
+	@Override
+	public ResponseEntity<ResourceRegion> getVideoRegion(Post post, String rangeHeader) throws IOException {
+		FileUrlResource videoResource = new FileUrlResource(post.getPostVideoPath());
+		ResourceRegion resourceRegion = getResourceRegion(videoResource, rangeHeader);
+
+		return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+				.contentType(MediaTypeFactory.getMediaType(videoResource)
+						.orElse(MediaType.APPLICATION_OCTET_STREAM))
+				.body(resourceRegion);
+	}
+
+	private ResourceRegion getResourceRegion(UrlResource video, String httpHeaders) throws IOException {
+		ResourceRegion resourceRegion = null;
+	
+		long contentLength = video.contentLength();
+		int fromRange = 0;
+		int toRange = 0;
+		if (StringUtils.isNotBlank(httpHeaders)) {
+			String[] ranges = httpHeaders.substring("bytes=".length()).split("-");
+			fromRange = Integer.valueOf(ranges[0]);
+			if (ranges.length > 1) {
+				toRange = Integer.valueOf(ranges[1]); 
+			} else {
+				toRange = (int) (contentLength - 1);
+			}	
+		}
+
+		if (fromRange > 0) {
+			long rangeLength = min(CHUNK_SIZE, toRange - fromRange + 1);
+			resourceRegion = new ResourceRegion(video, fromRange, rangeLength);
+		} else {
+			long rangeLength = min(CHUNK_SIZE, contentLength);
+			resourceRegion = new ResourceRegion(video, 0, rangeLength);
+		}
+		
+		return resourceRegion;
+	}
 	
 }
