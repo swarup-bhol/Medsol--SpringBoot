@@ -43,6 +43,7 @@ public class MedsolExceptions extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<Object>(error, HttpStatus.NOT_FOUND);
 	}
 
+	@ExceptionHandler(ExpiredJwtException.class)
 	public final ResponseEntity<Object> handelJwtTokenExpireException(ExpiredJwtException ex, WebRequest webRequest) {
 		ApiResponse<Object> error = new ApiResponse<>(404, Constants.TOKEN_EXPIRE, Constants.TOKEN_EXPIRE);
 		return new ResponseEntity<Object>(error, HttpStatus.UNAUTHORIZED);
