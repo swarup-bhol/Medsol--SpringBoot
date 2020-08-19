@@ -15,7 +15,6 @@ public class WelsocketConfig implements WebSocketMessageBrokerConfigurer {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry stompEndpointRegistry) {
-		logger.error("Call up to here");
 		stompEndpointRegistry.addEndpoint("/ws")
 				.setAllowedOrigins("*")
 				.withSockJS();

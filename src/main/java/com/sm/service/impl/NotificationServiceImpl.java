@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -25,15 +26,15 @@ public class NotificationServiceImpl implements NotificationService{
 	@Autowired
 	NotificationDao notificaiondao;
 	
+	@Autowired
+    private SimpMessagingTemplate template;
+	
 	public static final String COMMENT ="comment";
 	public static final String LIKE = "like";
 
 	@Override
 	public List<Notification> getNotification(long userId) {
-	   List<Notification> findNotificationByUserId = notificaiondao.findNotificationByUserId(userId);
-	   if(! findNotificationByUserId.isEmpty()) {
-		   updatenotification(findNotificationByUserId);
-	   }   
+	   List<Notification> findNotificationByUserId = notificaiondao.findNotificationByUserId(userId);   
 		return findNotificationByUserId;
 	}
 
@@ -61,11 +62,15 @@ public class NotificationServiceImpl implements NotificationService{
 			notification.setUserName(user.getFullName());
 			notification.setLastViewedTime(new Timestamp(System.currentTimeMillis()-1));
 			notification.setRecordStatus(true);
-			return notificaiondao.save(notification);
+			Notification notification2 = notificaiondao.save(notification);
+			sendNotification(post);
+			return notification2;
 		}else {
 			notification1.setRecordCount(notification1.getRecordCount()+1);
 			notification1.setUserName(user.getFullName());
-			return notificaiondao.save(notification1);
+			Notification notification = notificaiondao.save(notification1);
+			sendNotification(post);
+			return notification;
 		}
 	}
 
@@ -73,6 +78,13 @@ public class NotificationServiceImpl implements NotificationService{
 	public List<Notification> getOldNotification(long userId, int pageNo) {
 		return notificaiondao.findByUserIdOrderByRecordCreatedTimeDesc(userId, PageRequest.of(pageNo, 10));
 
+	}
+	
+	private void sendNotification(Post post){
+		long userId = post.getUser().getUserId();
+		String user =  String.valueOf(userId);
+		List<Notification> notification = getNotification(userId);
+		template.convertAndSendToUser(user, "/reply", notification);
 	}
 
 }

@@ -2,6 +2,7 @@ package com.sm.config.security;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -66,10 +67,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				SecurityContextHolder.getContext().setAuthentication(authentication);
 			}
 		}
-		res.setHeader("Access-Control-Allow-Origin", "*");
+		final List<String> allowedOrigins = Arrays.asList("http://localhost:4200");
+//		res.setHeader("Access-Control-Allow-Origin", "*");
         res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS");
 	    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Accept-Encoding, Accept-Language, Host, Referer, Connection, User-Agent, authorization, sw-useragent, sw-version");
-         System.out.println(req.getRequestURI());
+         String origin = req.getHeader("Origin");
+         res.setHeader("Access-Control-Allow-Origin", allowedOrigins.contains(origin) ? origin : "");
+         res.setHeader("Vary", "Origin");
+
+         // Access-Control-Max-Age
+         res.setHeader("Access-Control-Max-Age", "3600");
+
+         // Access-Control-Allow-Credentials
+         res.setHeader("Access-Control-Allow-Credentials", "true");
+
 		// Just REPLY OK if request method is OPTIONS for CORS (pre-flight)
 		if ( req.getMethod().equals("OPTIONS") ) {
         res.setStatus(HttpServletResponse.SC_OK);
