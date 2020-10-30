@@ -19,7 +19,7 @@ import com.sm.model.Grade;
 import com.sm.model.Profession;
 import com.sm.model.Specialization;
 import com.sm.model.User;
-import com.sm.util.ApiResponse;
+import com.sm.util.MedsolResponse;
 import com.sm.util.Constants;
 
 @RestController
@@ -41,38 +41,74 @@ public class ProfileController {
 	@Autowired
 	UserDao userDao;
 
+	/**
+	 * @author swarupb
+	 * 
+	 * @return
+	 */
 	@GetMapping("/profession/all") 
-	public ApiResponse<List<Profession>> getAllProfession() {
-		return new ApiResponse<>(200, Constants.OK, professionDao.findAll());
+	public MedsolResponse<List<Profession>> getAllProfession() {
+		return new MedsolResponse<>(true ,200, Constants.OK, professionDao.findAll());
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * @param professionId
+	 * @return
+	 */
 	@GetMapping("/grade/{professionId}")
-	public ApiResponse<List<Grade>> getAllGradeOnProfession(@PathVariable long professionId) {
+	public MedsolResponse<List<Grade>> getAllGradeOnProfession(@PathVariable long professionId) {
 		Profession profession = professionDao.findByProfessionId(professionId);
-		return new ApiResponse<>(200, Constants.OK, gradeDao.findByProfession(profession));
+		return new MedsolResponse<>(true ,200, Constants.OK, gradeDao.findByProfession(profession));
 	}
 	
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @return
+	 */
 	@GetMapping("/spec/all")
-	public ApiResponse<List<Specialization>> getAllSpecialization(){
+	public MedsolResponse<List<Specialization>> getAllSpecialization(){
 		List<Specialization> specializations = specDao.findAll();
-		return new ApiResponse<>(200, Constants.OK, specializations);
+		return new MedsolResponse<>(true ,200, Constants.OK, specializations);
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @param specId
+	 * @return
+	 */
 	@GetMapping("/subSpec/{specId}")
-	   public ApiResponse<List<Specialization>> getAllSubSpecialisation(@PathVariable long specId){
+	   public MedsolResponse<List<Specialization>> getAllSubSpecialisation(@PathVariable long specId){
 		Specialization specialization = specDao.findBySpecializationId(specId);
-		return new ApiResponse<>(200, Constants.OK, subSpecDao.findBySpecialization(specialization));
+		return new MedsolResponse<>(true ,200, Constants.OK, subSpecDao.findBySpecialization(specialization));
 	   }
 	
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @param userId
+	 * @return
+	 */
 	@GetMapping("/spec/{userId}")
-	public ApiResponse<List<Specialization>> getSpecializationByUserId(@PathVariable long userId){
+	public MedsolResponse<List<Specialization>> getSpecializationByUserId(@PathVariable long userId){
 		User user = userDao.findByUserId(userId);
 		if(user == null) throw new UserNotFound(Constants.USER_NOT_FOUND);
 		Specialization spec = specDao.findBySpecializationId(user.getSpecializationId());
 		List<Specialization> specializations = new ArrayList<>();
 		specializations.add(spec);
-		return new ApiResponse<>(200, Constants.OK, specializations);
+		return new MedsolResponse<>(true ,200, Constants.OK, specializations);
 		
 	}
+	
+//	@PostMapping("/profession")
+//	public ApiResponse<List<SubSpecialization>> createProfession(@RequestBody List<SubSpecialization> specs){
+//		return new ApiResponse(200, HttpStatus.CREATED.name(),subSpecDao.saveAll(specs));// subSpecDao.saveAll(specs))
+//	}
 
 }

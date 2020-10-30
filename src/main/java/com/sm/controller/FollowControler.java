@@ -20,7 +20,7 @@ import com.sm.exception.UserNotFound;
 import com.sm.model.Follower;
 import com.sm.model.User;
 import com.sm.service.FollowService;
-import com.sm.util.ApiResponse;
+import com.sm.util.MedsolResponse;
 import com.sm.util.Constants;
 import com.sm.util.JwtTokenUtil;
 
@@ -43,75 +43,91 @@ public class FollowControler {
 
 	
 	// Follow a user
+	/**
+	 * @author swarupb
+	 * 
+	 * @param userId
+	 * @param followerId
+	 * @return
+	 */
 	@PostMapping("/{userId}/follow/{followerId}")
-	public ApiResponse<Follower> follow(@PathVariable long userId, @PathVariable long followerId) {
-		User user =  userDao.findByUserId(userId);
-		User follower = userDao.findByUserId(followerId);
-		if(user == null || follower== null) throw new UserNotFound(Constants.USER_NOT_FOUND);
-		Follower followers = dao.findByUserIdAndFollowedBy(userId, followerId);
-		if(followers != null) {
-			followers.setFollowing(true);
-			return new ApiResponse<>(200, Constants.OK,dao.save(followers));
-		}
-		Follower follow = followService.followUser(userId, followerId);
-		return new ApiResponse<>(200, Constants.OK, follow);
-	}
-	
-	
-	// unFollow a user
-	@PutMapping("/{userId}/unFollow/{followerId}")
-	public ApiResponse<Follower> unFollow(@PathVariable long userId, @PathVariable long followerId) {
-		User user =  userDao.findByUserId(userId);
-		User follower = userDao.findByUserId(followerId);
-		if(user == null || follower== null) throw new UserNotFound(Constants.USER_NOT_FOUND);
-		Follower followers = dao.findByUserIdAndFollowedBy(userId, followerId);
-		if(followers != null) {
-			followers.setFollowing(false);
-			Follower save = dao.save(followers);
-			return new ApiResponse<>(200, Constants.OK,save);
-		}
-		return new ApiResponse<>(200, Constants.USER_NOT_FOUND, followerId);
-	}
- // User is following or not
-	@GetMapping("/{userId}/isFollow/{followId}")
-	public ApiResponse<Boolean> isFollowing(@PathVariable long userId,@PathVariable long followId) {
-		User user =  userDao.findByUserId(userId);
-		User follower = userDao.findByUserId(followId);
-		if(user == null || follower == null) throw new UserNotFound(Constants.USER_NOT_FOUND);
-		boolean isFollow = followService.isFollowing(userId,followId);
-		return new ApiResponse<Boolean>(200, Constants.OK, isFollow);
+	public MedsolResponse<Follower> follow(@PathVariable long userId, @PathVariable long followerId) {
+		return followService.follUsers(userId, followerId);
 	}
 
-	//  Get all followers
-	@GetMapping("/{userId}")
-	public ApiResponse<List<SuggetionsDto>> getAllFollower(@PathVariable long userId) {
-		User user =  userDao.findByUserId(userId);
-		if(user == null) throw new UserNotFound(Constants.USER_NOT_FOUND);
-		List<SuggetionsDto> users = followService.findAllFollowers(userId);
-		return new ApiResponse<>(200, "Success", users);
+	
+	// unFollow a user/**
+	/**
+	 * @author swarupb
+	 * 
+	 * @param userId
+	 * @param followerId
+	 * @return
+	 */
+	@PutMapping("/{userId}/unFollow/{followerId}")
+	public MedsolResponse<Follower> unFollow(@PathVariable long userId, @PathVariable long followerId) {
+		return followService.unfollowUser(userId, followerId);
 	}
+
+ // User is following or not
+	/**
+	 * @author swarupb
+	 * 
+	 * @param userId
+	 * @param followId
+	 * @return
+	 */
+	@GetMapping("/{userId}/isFollow/{followId}")
+	public MedsolResponse<Boolean> isFollowing(@PathVariable long userId,@PathVariable long followId) {
+		return followService.isFollowingUser(userId, followId);
+	}
+
+
+	//  Get all followers
+	/**
+	 * @author swarupb
+	 * 
+	 * @param userId
+	 * @return
+	 */
+	@GetMapping("/{userId}")
+	public MedsolResponse<List<SuggetionsDto>> getAllFollower(@PathVariable long userId) {
+		return followService.allFollower(userId);
+	}
+
 	
 	// get all persons the user is following
+	/**
+	 * @author swarupb
+	 * 
+	 * @param userId
+	 * @return
+	 */
 	@GetMapping("following/{userId}")
-	public ApiResponse<List<SuggetionsDto>> getAllFollowingUser(@PathVariable long userId) {
-		User user =  userDao.findByUserId(userId);
-		if(user == null) throw new UserNotFound(Constants.USER_NOT_FOUND);
-		List<SuggetionsDto> users = followService.findAllFollowing(userId);
-		return new ApiResponse<>(200, "Success", users);
+	public MedsolResponse<List<SuggetionsDto>> getAllFollowingUser(@PathVariable long userId) {
+		return followService.allFollowings(userId);
 	}
+
+
 	
 //	@GetMapping("/peoples/{pageNo}")
 //	public ApiResponse<List<User>> getPeople(@PathVariable int pageNo){
 //		List<User> users = followService.findPeople(pageNo);
 //		return new ApiResponse<>(200, Constants.OK, users);
 //	}
-	
+	/**
+	 * @author swarupb
+	 * 
+	 * @param userId
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 */
 	@GetMapping("/{userId}/peoples/{pageNo}/{pageSize}")
-	public ApiResponse<List<PersonDto>> getAllUnfollowUser(@PathVariable long userId,@PathVariable int pageNo,@PathVariable int pageSize ){
-		User user = userDao.findByUserId(userId);
-		if(user == null) throw new UserNotFound(Constants.USER_NOT_FOUND);
-		List<SuggetionsDto> allUser = followService.getAllUsersNotFollowedByCurrentUser(user, pageNo, pageSize);
-		return new ApiResponse<>(200, Constants.OK, allUser);
+	public MedsolResponse<List<PersonDto>> getAllUnfollowUser(@PathVariable long userId,@PathVariable int pageNo,@PathVariable int pageSize ){
+		return followService.unfolowers(userId, pageNo, pageSize);
 	}
+
+
 
 }

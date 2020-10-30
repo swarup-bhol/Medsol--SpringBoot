@@ -22,7 +22,7 @@ import com.sm.exception.ResourceNotFoundException;
 import com.sm.model.Comment;
 import com.sm.model.Post;
 import com.sm.service.CommentService;
-import com.sm.util.ApiResponse;
+import com.sm.util.MedsolResponse;
 import com.sm.util.Constants;
 
 
@@ -45,56 +45,56 @@ public class CommentController {
 	
 	
 	@PostMapping("/create")
-	public ApiResponse<Comment> postComment(@RequestBody CommentDto cmmnt){
+	public MedsolResponse<Comment> postComment(@RequestBody CommentDto cmmnt){
 		CommentListDto comment = commentService.createNewComment(cmmnt);
-		return new ApiResponse<>( 200, Constants.OK, comment);
+		return new MedsolResponse<>( true ,200, Constants.OK, comment);
 		
 		
 	}
 	@GetMapping("/{postId}")
-	public ApiResponse<List<Comment>> getPostComment(@PathVariable long postId){
+	public MedsolResponse<List<Comment>> getPostComment(@PathVariable long postId){
 		Post post = postDao.findByPostId(postId);
 		if(post == null) throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
 		List<Comment> allComments = commentDao.findByPostAndReCommentId(post,0);
-		return new ApiResponse<>(200, Constants.OK, allComments);
+		return new MedsolResponse<>(true ,200, Constants.OK, allComments);
 	}
 	
 	@DeleteMapping("/{commentId}")
-	public ApiResponse<String> removeComment(@PathVariable long commentId){
+	public MedsolResponse<String> removeComment(@PathVariable long commentId){
 		Comment comment = commentDao.findByCommentId(commentId);
 		if(comment == null) throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
 		commentDao.deleteById(commentId);
-		return new ApiResponse<>(200, Constants.OK, Constants.DELETED);
+		return new MedsolResponse<>(true ,200, Constants.OK, Constants.DELETED);
 	}
 	
 	@PutMapping("/{commentId}")
-	public ApiResponse<Comment> updateComment(@RequestBody CommentDto commentDto,@PathVariable long commentId){		
+	public MedsolResponse<Comment> updateComment(@RequestBody CommentDto commentDto,@PathVariable long commentId){		
 		Comment comment = commentDao.findByCommentId(commentId);
 		if(comment == null) throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
 		comment.setComment(commentDto.getMessage());
-		return new ApiResponse<>(200, Constants.OK, commentDao.save(comment));
+		return new MedsolResponse<>(true , 200, Constants.OK, commentDao.save(comment));
 	}
 	@PostMapping("/recomment")
-	public ApiResponse<Comment> createReComment(@RequestBody ReCommentDto reCommentDto){
+	public MedsolResponse<Comment> createReComment(@RequestBody ReCommentDto reCommentDto){
 		CommentListDto comment = commentService.createNewReComment(reCommentDto);
-		return new ApiResponse<Comment>(200,Constants.OK,comment);
+		return new MedsolResponse<Comment>(true , 200,Constants.OK,comment);
 		
 	}
 
 	@DeleteMapping("/recomment/{commentId}")
-	public ApiResponse<String> removeReComment(@PathVariable long commentId){
+	public MedsolResponse<String> removeReComment(@PathVariable long commentId){
 		Comment comment = commentDao.findByCommentId(commentId);
 		if(comment == null) throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
 		commentDao.deleteById(commentId);
-		return new ApiResponse<>(200, Constants.OK, Constants.DELETED);
+		return new MedsolResponse<>(true , 200, Constants.OK, Constants.DELETED);
 	}
 	
 	@PutMapping("/recomment/{commentId}")
-	public ApiResponse<Comment> updateReComment(@RequestBody  ReCommentDto reCommentDto,@PathVariable long commentId){		
+	public MedsolResponse<Comment> updateReComment(@RequestBody  ReCommentDto reCommentDto,@PathVariable long commentId){		
 		Comment comment = commentDao.findByCommentId(commentId);
 		if(comment == null) throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
 		comment.setComment(reCommentDto.getCommentedText());
-		return new ApiResponse<>(200, Constants.OK, commentDao.save(comment));
+		return new MedsolResponse<>(true ,200, Constants.OK, commentDao.save(comment));
 	}
 	
 //	@PostMapping("/recomment")

@@ -16,7 +16,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import com.sm.exception.InvalidUserNamePasswordException;
 import com.sm.exception.UnautorizedAccess;
 import com.sm.exception.UserNotFound;
-import com.sm.util.ApiResponse;
+import com.sm.util.MedsolResponse;
 import com.sm.util.Constants;
 
 import io.jsonwebtoken.ExpiredJwtException;
@@ -27,25 +27,26 @@ public class MedsolExceptions extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(InvalidUserNamePasswordException.class)
 	public final ResponseEntity<Object> handleInvalidUserNameOrPAsswordException(InvalidUserNamePasswordException ex,
 			WebRequest request) {
-		ApiResponse<Object> error = new ApiResponse<>(400, Constants.INVALID_CREDENTIALS, ex.getMessage());
+		MedsolResponse<Object> error = new MedsolResponse<>(false, 400, Constants.INVALID_CREDENTIALS, ex.getMessage());
 		return new ResponseEntity<Object>(error, HttpStatus.OK);
 	}
 
 	@ExceptionHandler(UnautorizedAccess.class)
 	public final ResponseEntity<Object> handleUnauthorizedAccessException(UnautorizedAccess ex, WebRequest request) {
-		ApiResponse<Object> error = new ApiResponse<>(401, Constants.UNAUTHORIZED, Constants.UNAUTHORIZED);
+		MedsolResponse<Object> error = new MedsolResponse<>(false, 401, Constants.UNAUTHORIZED, Constants.UNAUTHORIZED);
 		return new ResponseEntity<Object>(error, HttpStatus.OK);
 	}
 
 	@ExceptionHandler(UserNotFound.class)
 	public final ResponseEntity<Object> handleUserNotFoundException(UserNotFound ex, WebRequest request) {
-		ApiResponse<Object> error = new ApiResponse<>(404, Constants.USER_NOT_FOUND, Constants.USER_NOT_FOUND);
+		MedsolResponse<Object> error = new MedsolResponse<>(false, 404, Constants.USER_NOT_FOUND,
+				Constants.USER_NOT_FOUND);
 		return new ResponseEntity<Object>(error, HttpStatus.NOT_FOUND);
 	}
 
 	@ExceptionHandler(ExpiredJwtException.class)
 	public final ResponseEntity<Object> handelJwtTokenExpireException(ExpiredJwtException ex, WebRequest webRequest) {
-		ApiResponse<Object> error = new ApiResponse<>(404, Constants.TOKEN_EXPIRE, Constants.TOKEN_EXPIRE);
+		MedsolResponse<Object> error = new MedsolResponse<>(false, 404, Constants.TOKEN_EXPIRE, Constants.TOKEN_EXPIRE);
 		return new ResponseEntity<Object>(error, HttpStatus.UNAUTHORIZED);
 	}
 

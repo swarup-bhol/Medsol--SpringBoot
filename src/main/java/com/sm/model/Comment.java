@@ -13,7 +13,13 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@Entity
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity @Builder @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class Comment {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -33,54 +39,5 @@ public class Comment {
 	@ManyToOne
 	@JoinColumn(name = "userId")
 	private User user;
-
-	public long getCommentId() {
-		return commentId;
-	}
-
-	public void setCommentId(long commentId) {
-		this.commentId = commentId;
-	}
-
-	public String getComment() {
-		return comment;
-	}
-
-	public void setComment(String comment) {
-		this.comment = comment;
-	}
-
-	public Timestamp getCreatedTime() {
-		return createdTime;
-	}
-
-	public void setCreatedTime(Timestamp createdTime) {
-		this.createdTime = createdTime;
-	}
-
-	
-	public long getReCommentId() {
-		return reCommentId;
-	}
-
-	public void setReCommentId(long reCommentId) {
-		this.reCommentId = reCommentId;
-	}
-
-	public Post getPost() {
-		return post;
-	}
-
-	public void setPost(Post post) {
-		this.post = post;
-	}
-
-	public User getUser() {
-		return user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
-	}
 
 }

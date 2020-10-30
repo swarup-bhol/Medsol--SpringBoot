@@ -1,5 +1,6 @@
 package com.sm.service.impl;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -7,11 +8,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.hibernate.HibernateException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -27,6 +32,7 @@ import com.sm.dao.ProfessionDao;
 import com.sm.dao.SpecializationDao;
 import com.sm.dao.SubSpecializationDao;
 import com.sm.dao.UserDao;
+import com.sm.dto.JwtToken;
 import com.sm.dto.LoginUser;
 import com.sm.dto.PasswordDto;
 import com.sm.dto.Profile;
@@ -44,13 +50,17 @@ import com.sm.model.User;
 import com.sm.service.FollowService;
 import com.sm.service.UserService;
 import com.sm.util.Constants;
+import com.sm.util.JwtTokenUtil;
+import com.sm.util.MedsolResponse;
+
 
 @Service(value = "userService")
 public class UserServiceImpl implements UserDetailsService, UserService {
 
+	Logger logger = LoggerFactory.getLogger(this.getClass());
+
 	public static final String uploadingDir = System.getProperty("user.dir") + "/Uploads/ProfilePic";
 	public static final String docDir = System.getProperty("user.dir") + "/Uploads/Document";
-
 
 	@Autowired
 	UserDao userDao;
@@ -77,15 +87,26 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 	PostDao postDao;
 
 	@Autowired
+	private JwtTokenUtil jwtTokenUtil;
+
+	@Autowired
 	FollowService followService;
 
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		User user = userDao.findByUserEmail(username);
-		if (user == null) {
-			throw new UsernameNotFoundException("Invalid email or password.");
+		org.springframework.security.core.userdetails.User loginUser = null;
+		try {
+			User user = userDao.findByUserEmail(username);
+			if (user == null) {
+				throw new UsernameNotFoundException("Invalid email or password.");
+			}
+			loginUser = new org.springframework.security.core.userdetails.User(user.getUserEmail(),
+					user.getUserPassword(), getAuthority());
+
+		} catch (Exception e) {
+			logger.error("Error :loadUserByUsername ",e.getMessage());
 		}
-		return new org.springframework.security.core.userdetails.User(user.getUserEmail(), user.getUserPassword(),
-				getAuthority());
+
+		return loginUser;
 	}
 
 	private List<SimpleGrantedAuthority> getAuthority() {
@@ -94,44 +115,70 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
 	@Override
 	public User save(UserDto user) {
-		User newUser = new User();
-		newUser.setUserEmail(user.getEmail());
-		newUser.setUserMobile(user.getMobile());
-		newUser.setFullName(user.getName());
-		newUser.setUserPassword(bcryptEncoder.encode(user.getPassword()));
-//		newUser.setRecordStatus(true);
-		return userDao.save(newUser);
+		User user2 = null;
+
+		try {
+			User newUser = new User();
+			newUser.setUserEmail(user.getEmail());
+			newUser.setUserMobile(user.getMobile());
+			newUser.setFullName(user.getName());
+			newUser.setUserPassword(bcryptEncoder.encode(user.getPassword()));
+			user2 = userDao.save(newUser);
+
+		} catch (Exception e) {
+			logger.error("Error :save ",e.getMessage());
+		}
+		return user2;
 	}
 
 	@Override
 	public User findOne(String username) {
-		User user = findByEmail(username);
+		User user = null;
+		try {
+			user = findByEmail(username);
+		} catch (Exception e) {
+			logger.error("Error :findOne ",e.getMessage());
+		}
 		return user;
 	}
 
 	@Override
 	public boolean checkUser(UserDto userDto) {
-		User user = userDao.findByUserEmail(userDto.getEmail());
-		if (user == null) {
-			return false;
+		User user = null;
+		try {
+			user = userDao.findByUserEmail(userDto.getEmail());
+			if (user == null) {
+				return false;
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
 		}
 		return true;
 	}
 
 	private User findByEmail(String email) {
-		User user = userDao.findByUserEmail(email);
-		if (user == null) {
-			throw new UsernameNotFoundException("Invalid email" + email);
+		User user = null;
+		try {
+			user = userDao.findByUserEmail(email);
+			if (user == null) {
+				throw new UsernameNotFoundException("Invalid email" + email);
 
+			}
+		} catch (Exception e) {
+			logger.error("Error :findByEmail ",e.getMessage());
 		}
 		return user;
 	}
 
 	public User findByuserId(long userId) {
-		User user = userDao.findByUserId(userId);
-		if (user == null) {
-			throw new UsernameNotFoundException("User Not Found" + userId);
-
+		User user = null;
+		try {
+			user = userDao.findByUserId(userId);
+			if (user == null) {
+				throw new UsernameNotFoundException("User Not Found" + userId);
+			}
+		} catch (Exception e) {
+			logger.error("Error :findByuserId ",e.getMessage());
 		}
 		return user;
 	}
@@ -142,154 +189,265 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 	 */
 	public boolean loginUser(LoginUser loginUser) {
 		boolean result = false;
-		User user = userDao.findByUserEmail(loginUser.getEmail());
-		if (user != null) {
-			result = bcryptEncoder.matches(loginUser.getPassword(), user.getUserPassword());
+		User user = null;
+		try {
+			user = userDao.findByUserEmail(loginUser.getEmail());
+			if (user != null) {
+				result = bcryptEncoder.matches(loginUser.getPassword(), user.getUserPassword());
+			}
+		} catch (Exception e) {
+			logger.error("Error :loginUser ",e.getMessage());
 		}
 		return result;
 	}
 
 	@Override
-	public User uploadProfilePic(MultipartFile file, User user) throws IOException {
-		if (!new File(uploadingDir).exists()) {
-			new File(uploadingDir).mkdirs();
-		}
-		String uniqueID = UUID.randomUUID().toString();
-		Path uploadPath = Paths.get(uploadingDir, uniqueID+file.getOriginalFilename());
-		Files.write(uploadPath, file.getBytes());
+	public MedsolResponse<User> uploadProfilePic(MultipartFile file, User user) {
+		MedsolResponse<User> response = new MedsolResponse<>(true, 200, Constants.FAILED, null);
+		try {
+			if (!new File(uploadingDir).exists()) {
+				new File(uploadingDir).mkdirs();
+			}
+			String uniqueID = UUID.randomUUID().toString();
+			Path uploadPath = Paths.get(uploadingDir, uniqueID + file.getOriginalFilename());
+			Files.write(uploadPath, file.getBytes());
 
-		if (user.getProfilePicPath() != null) {
-			Path prevPath = Paths.get(user.getProfilePicPath());
-			Files.deleteIfExists(prevPath);
+			if (user.getProfilePicPath() != null) {
+				Path prevPath = Paths.get(user.getProfilePicPath());
+				Files.deleteIfExists(prevPath);
+			}
+			user.setProfilePicId(uniqueID);
+			user.setProfilePicPath(uploadPath.toString());
+			response = new MedsolResponse<>(true, 200, Constants.CREATED, userDao.save(user));
+		} catch (IOException e) {
+			logger.error("IO Error :", e.getMessage());
+		} catch (Exception e) {
+			logger.error("Error :", e.getMessage());
 		}
-		user.setProfilePicId(uniqueID);
-		user.setProfilePicPath(uploadPath.toString());
-		return userDao.save(user);
+		return response;
+
 	}
 
 	@Override
-	public ProfileDetailsDto getProfileDetails(User user) {
+	public MedsolResponse<ProfileDetailsDto> getProfileDetails(User user) {
 
-		Profession profession = professionDao.findByProfessionId(user.getProfessionId());
-		if (profession == null)
-			throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
-
-		Specialization specialization = specializationDao.findBySpecializationId(user.getSpecializationId());
-		if (specialization == null)
-			throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
- 
-		SubSpecialization subSpecialization = subSpecializationDao.findBySubSpecId(user.getDetailsSpecializationId());
-		if (subSpecialization == null)
-			throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
-
-		Grade grade = gradeDao.findByGradeId(user.getGrade());
-		if (grade == null)
-			throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
- 
-//		long postCount = postDao.countByUserAndRecordStatus(user,true);
-		long followingCount = followDao.totalCountByFollowedByAndIsFollowing(user.getUserId(), true);
-		long followerCount = followDao.totalCountByUserIdAndIsFollowing(user.getUserId(), true);
+		MedsolResponse<ProfileDetailsDto> response = new MedsolResponse<>(false, 200, Constants.OK, null);
 
 		ProfileDetailsDto proDetails = new ProfileDetailsDto();
 
-		proDetails.setFullName(user.getFullName());
-		proDetails.setUserId(user.getUserId());
-		proDetails.setProfession(profession.getProfessionName());
-		proDetails.setGrade(grade.getGradeName());
-		proDetails.setSpecialization(specialization.getSpecializationName());
-		proDetails.setSubSpecialization(subSpecialization.getSubSpecName());
-		proDetails.setInstitute(user.getInstituteName());
-		proDetails.setEmailVerrified(user.isEmailVerrified());
-		proDetails.setMobileVerrified(user.isMobileVerrified());
-		proDetails.setProfileId(user.getProfilePicId());
-		proDetails.setDocId(user.getDocumentId());
-		proDetails.setFollower(followerCount);
-		proDetails.setFollowing(followingCount);
-		proDetails.setDob(user.getDateOfBirth());
-		proDetails.setEmail(user.getUserEmail());
-		proDetails.setMobile(user.getUserMobile());
+		try {
+			Profession profession = professionDao.findByProfessionId(user.getProfessionId());
+			if (profession == null)
+				throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
 
-		return proDetails;
-	}
+			Specialization specialization = specializationDao.findBySpecializationId(user.getSpecializationId());
+			if (specialization == null)
+				throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
 
-	@Override
-	public ProfileDetailsDto updateProfile(long userId, UpdateProfileDto profileDto) {
-		User user = userDao.findByUserId(userId);
-		if (user == null)
-			throw new UserNotFound(Constants.USER_NOT_FOUND);
-		user.setFullName(profileDto.getName());
-		user.setDateOfBirth(profileDto.getDob());
-		user.setUserMobile(profileDto.getMobileNo());
-		user.setInstituteName(profileDto.getInstitue());
-		User userData = userDao.save(user);
-		return getProfileDetails(userData);
-	}
+			SubSpecialization subSpecialization = subSpecializationDao
+					.findBySubSpecId(user.getDetailsSpecializationId());
+			if (subSpecialization == null)
+				throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
 
-	@Override
-	public User updatePassWord(User user, PasswordDto passwordDto) {
-		boolean matches = bcryptEncoder.matches(passwordDto.getOldPassword(), user.getUserPassword());
-		if (matches) {
-			user.setUserPassword(bcryptEncoder.encode(passwordDto.getPassword()));
-			return userDao.save(user);
+			Grade grade = gradeDao.findByGradeId(user.getGrade());
+			if (grade == null)
+				throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
+
+//		long postCount = postDao.countByUserAndRecordStatus(user,true);
+			long followingCount = followDao.totalCountByFollowedByAndIsFollowing(user.getUserId(), true);
+			long followerCount = followDao.totalCountByUserIdAndIsFollowing(user.getUserId(), true);
+
+			proDetails = ProfileDetailsDto.builder().fullName(user.getFullName()).userId(user.getUserId())
+					.profession(profession.getProfessionName()).grade(grade.getGradeName())
+					.specialization(specialization.getSpecializationName())
+					.subSpecialization(subSpecialization.getSubSpecName()).institute(user.getInstituteName())
+					.isEmailVerrified(user.isEmailVerrified()).isMobileVerrified(user.isMobileVerrified())
+					.profileId(user.getProfilePicId()).docId(user.getDocumentId()).follower(followerCount)
+					.following(followingCount).dob(user.getDateOfBirth()).email(user.getUserEmail())
+					.mobile(user.getUserMobile()).build();
+
+			response = new MedsolResponse<>(true, 200, Constants.OK, proDetails);
+		} catch (HibernateException e) {
+			logger.error(e.getMessage());
 		}
-		return null;
+
+		catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+
+		return response;
+	}
+
+	@Override
+	public MedsolResponse<ProfileDetailsDto> updateProfile(long userId, UpdateProfileDto profileDto) {
+		User user = null;
+		MedsolResponse<ProfileDetailsDto> profileDetails = null;
+		try {
+			user = userDao.findByUserId(userId);
+			if (user == null)
+				throw new UserNotFound(Constants.USER_NOT_FOUND);
+			user.setFullName(profileDto.getName());
+			user.setDateOfBirth(profileDto.getDob());
+			user.setUserMobile(profileDto.getMobileNo());
+			user.setInstituteName(profileDto.getInstitue());
+			User userData = userDao.save(user);
+			profileDetails = getProfileDetails(userData);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+		return profileDetails;
+	}
+
+	@Override
+	public MedsolResponse<User> updatePassWord(User user, PasswordDto passwordDto) {
+		MedsolResponse<User> response = new MedsolResponse<>(true, 200, Constants.PASSWORD_NOT_MATCH, null);
+		try {
+			boolean matches = bcryptEncoder.matches(passwordDto.getOldPassword(), user.getUserPassword());
+			if (matches) {
+				user.setUserPassword(bcryptEncoder.encode(passwordDto.getPassword()));
+				response = new MedsolResponse<>(true, 200, Constants.OK, userDao.save(user));
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+		return response;
 	}
 
 	@Override
 	public User createProfile(Profile profile, User user) {
-		user.setDateOfBirth(profile.getDob());
-		user.setProfessionId(profile.getProfession());
-		user.setSpecializationId(profile.getSpecialization());
-		user.setGrade(profile.getGrade());
-		user.setDetailsSpecializationId(profile.getSubspecialization());
-		user.setFullName(profile.getName());
-		user.setInstituteName(profile.getInstitute());
-		user.setRecordStatus(true);
-		return userDao.save(user);
+		User save = null;
+		try {
+			user.setDateOfBirth(profile.getDob());
+			user.setProfessionId(profile.getProfession());
+			user.setSpecializationId(profile.getSpecialization());
+			user.setGrade(profile.getGrade());
+			user.setDetailsSpecializationId(profile.getSubspecialization());
+			user.setFullName(profile.getName());
+			user.setInstituteName(profile.getInstitute());
+			user.setRecordStatus(true);
+			save = userDao.save(user);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+
+		return save;
 	}
 
 	@Override
-	public List<SuggetionsDto> searchUser(String name, long userId) {
-		List<User> users = userDao.findUsersWithStartPartOfName(name);
-		if (users.isEmpty()) {
-			users = userDao.findUsersWithPartOfName(name);
+	public MedsolResponse<List<SuggetionsDto>> searchUser(String name, long userId) {
+		List<User> users = new ArrayList<User>();
+//		List<SuggetionsDto> suggetionsDtos = new ArrayList<SuggetionsDto>();
+		MedsolResponse<List<SuggetionsDto>> respone = new MedsolResponse<>(false, 200, Constants.OK, null);
+		try {
+
+			users = userDao.findUsersWithStartPartOfName(name);
+			if (users.isEmpty()) {
+				users = userDao.findUsersWithPartOfName(name);
+			}
+			List<SuggetionsDto> suggetionsDtos = users.stream().map(user -> {
+
+				Profession profession = professionDao.findByProfessionId(user.getProfessionId());
+				return SuggetionsDto.builder().isFollowing(followService.isFollowing(user.getUserId(), userId))
+						.Profession(profession.getProfessionName()).institute(user.getInstituteName())
+						.userId(user.getUserId()).userName(user.getFullName()).build();
+			}).collect(Collectors.toList());
+			respone = new MedsolResponse<>(true, 200, Constants.OK, suggetionsDtos);
+		} catch (HibernateException e) {
+			logger.error("DB Error : searchUser", e.getMessage());
+		} catch (Exception e) {
+			logger.error("Error : searchUser", e.getMessage());
 		}
-		List<SuggetionsDto> suggetionsDtos = new ArrayList<SuggetionsDto>();
-		Iterator<User> iterator = users.iterator();
-		while (iterator.hasNext()) {
-			User user = iterator.next();
-			SuggetionsDto suggetionsDto = new SuggetionsDto();
-			Profession profession = professionDao.findByProfessionId(user.getProfessionId());
-			if (profession == null)
-				throw new ResourceNotFoundException(Constants.RESOURCE_NOT_FOUND);
-			suggetionsDto.setFollowing(followService.isFollowing(user.getUserId(), userId));
-			suggetionsDto.setProfession(profession.getProfessionName());
-			suggetionsDto.setInstitute(user.getInstituteName());
-			suggetionsDto.setUserId(user.getUserId());
-			suggetionsDto.setUserName(user.getFullName());
-			suggetionsDtos.add(suggetionsDto);
-		}
-		return suggetionsDtos;
+		return respone;
 	}
 
 	@Override
-	public User uploadDocument(MultipartFile file, User user) throws IOException {
-		if (!new File(docDir).exists()) {
-			new File(docDir).mkdirs();
-		}
-		String uniqueID = UUID.randomUUID().toString();
-		Path uploadPath = Paths.get(docDir, uniqueID+file.getOriginalFilename());
-		Files.write(uploadPath, file.getBytes());
+	public MedsolResponse<User> uploadDocument(MultipartFile file, User user) throws IOException {
 
-		if (user.getUserDocumentPath() != null) {
-			Path prevPath = Paths.get(user.getUserDocumentPath());
-			Files.deleteIfExists(prevPath);
+		MedsolResponse<User> user1 = new MedsolResponse<>(false, 200, Constants.CREATED, null);
+
+		try {
+			if (!new File(docDir).exists()) {
+				new File(docDir).mkdirs();
+			}
+			String uniqueID = UUID.randomUUID().toString();
+			Path uploadPath = Paths.get(docDir, uniqueID + file.getOriginalFilename());
+			Files.write(uploadPath, file.getBytes());
+
+			if (user.getUserDocumentPath() != null) {
+				Path prevPath = Paths.get(user.getUserDocumentPath());
+				Files.deleteIfExists(prevPath);
+			}
+			user.setUserDocumentPath(uploadPath.toString());
+			user.setDocumentId(uniqueID);
+			user1 = new MedsolResponse<>(false, 200, Constants.CREATED, userDao.save(user));
+		} catch (HibernateException e) {
+			logger.error("DB Error : searchUser", e.getMessage());
+		} catch (IOException e) {
+			logger.error("IO Error : searchUser", e.getMessage());
+		} catch (Exception e) {
+			logger.error(e.getMessage());
 		}
-		
-		user.setUserDocumentPath(uploadPath.toString());
-		user.setDocumentId(uniqueID);
-		return userDao.save(user);
-//		return user;
+		return user1;
+	}
+
+	@Override
+	public MedsolResponse<JwtToken> createProfile(Profile profile, String email) {
+		MedsolResponse<JwtToken> medsolResponse = new MedsolResponse<>(false, 200, Constants.OK, null);
+		try {
+			User user = userDao.findByUserEmail(email);
+			if (user == null)
+				throw new UserNotFound(Constants.USER_NOT_FOUND);
+			if (user.isRecordStatus())
+				return new MedsolResponse<>(false, 409, Constants.USER_EXIST, profile);
+			User updatedUser = createProfile(profile, user);
+			final String token = jwtTokenUtil.generateToken(user);
+			medsolResponse = new MedsolResponse<>(true, 200, Constants.OK,
+					new JwtToken(token, updatedUser.getUserEmail(), updatedUser.getUserId()));
+		} catch (HibernateException e) {
+			logger.error("DB Error : createProfile", e.getMessage());
+		} catch (NullPointerException e) {
+			logger.error("IO Error : createProfile", e.getMessage());
+		} catch (Exception e) {
+			logger.error("Error : createProfile", e.getMessage());
+		}
+		return medsolResponse;
+	}
+
+	@Override
+	public MedsolResponse<JwtToken> login(LoginUser loginUser) {
+
+		MedsolResponse<JwtToken> response = new MedsolResponse<>(false, 401, Constants.INVALID_CREDENTIALS, true);
+		try {
+			if (loginUser != null) {
+				boolean result = loginUser(loginUser);
+				if (result) {
+					final User user = findOne(loginUser.getEmail());
+					final String token = jwtTokenUtil.generateToken(user);
+					response = new MedsolResponse<>(true, 200, Constants.OK,
+							new JwtToken(token, user.getUserEmail(), user.getUserId()));
+				}
+				response = new MedsolResponse<>(false, 400, Constants.INVALID_CREDENTIALS, loginUser);
+			}
+		} catch (HibernateException e) {
+			logger.error("DB Error : login", e.getMessage());
+		} catch (Exception e) {
+			logger.error("Error : login", e.getMessage());
+		}
+		return response;
+	}
+
+	@Override
+	public MedsolResponse<User> createNewUser(UserDto user) {
+		MedsolResponse<User> response = new MedsolResponse<>(false, 409, Constants.USER_EXIST, user);
+		try {
+			boolean userExist = checkUser(user);
+			if (!userExist) {
+				response = new MedsolResponse<>(true, HttpStatus.OK.value(), Constants.CREATED, save(user));
+			}
+		} catch (Exception e) {
+			logger.error("createNewUser : login", e.getMessage());
+		}
+		return response;
 	}
 
 }

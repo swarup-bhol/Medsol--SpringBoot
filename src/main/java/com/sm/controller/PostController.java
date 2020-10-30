@@ -28,14 +28,10 @@ import com.sm.dao.PostDao;
 import com.sm.dao.UserDao;
 import com.sm.dto.PostDto;
 import com.sm.exception.PostNotFoundException;
-import com.sm.exception.ResourceNotFoundException;
-import com.sm.exception.UserNotFound;
 import com.sm.model.Post;
-import com.sm.model.User;
 import com.sm.service.PostService;
 import com.sm.service.UserService;
-import com.sm.util.ApiResponse;
-import com.sm.util.Constants;
+import com.sm.util.MedsolResponse;
 
 @RestController
 @RequestMapping("/api/medsol/posts")
@@ -54,41 +50,50 @@ public class PostController {
 	UserDao userDao;
 
 	// Upload post only text or file like image or video
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @param userId
+	 * @param content
+	 * @param file
+	 * @param type
+	 * @return
+	 * @throws IOException
+	 */
 	@PostMapping("/{userId}")
-	public ApiResponse<Post> uploadPost(@PathVariable Long userId, @RequestParam("content") String content,
-			@RequestParam(required = false) MultipartFile file, @RequestParam("type") String type) throws IOException {
-		if (content.isEmpty())
-			return new ApiResponse<>(400, Constants.BAD_REQUEST, content);
-		User user = userService.findByuserId(userId);
-
-		if (user == null)
-			throw new UserNotFound(Constants.USER_NOT_FOUND);
-		if (file == null) { // Condition for only uploading text Post
-			Post post = postService.createPost(user, content, type);
-			return new ApiResponse<>(200, Constants.CREATED, post);
-		}
-		Post post = postService.uploadMedia(file, user, content, type);
-		return new ApiResponse<>(200, Constants.CREATED, post);
+	public MedsolResponse<Post> uploadPost(@PathVariable Long userId, @RequestParam("content") String content,
+			@RequestParam(required = false) MultipartFile file, @RequestParam("type") String type) {
+		return postService.createNewPost(userId, content, file, type);
 	}
 
 	// Update post
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @param postId
+	 * @param content
+	 * @param file
+	 * @return
+	 * @throws IOException
+	 */
 	@PutMapping("post/{postId}")
-	public ApiResponse<Post> updateUploadedPost(@PathVariable Long postId, @RequestParam("content") String content,
+	public MedsolResponse<Post> updateUploadedPost(@PathVariable Long postId, @RequestParam("content") String content,
 			@RequestParam(required = false) MultipartFile file) throws IOException {
-		if (content.isEmpty())
-			return new ApiResponse<>(400, Constants.BAD_REQUEST, content);
-		Post post = postService.getPostById(postId);
-		if (post == null)
-			return new ApiResponse<Post>(204, Constants.FILE_NOT_FOUND, post);
-		if (file == null) {
-			post.setPostContent(content);
-			return new ApiResponse<>(200, Constants.CREATED, postDao.save(post));
-		}
-		Post updatePost = postService.updateMedia(post, content, file);
-		return new ApiResponse<>(200, Constants.CREATED, updatePost);
+		return postService.updatePost(postId, content, file);
 	}
 
 	// Get each media file in format of jpeg or png
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * 
+	 * @param postId
+	 * @return
+	 * @throws IOException
+	 */
 	@GetMapping(value = "/img/{postId}", produces = { MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE })
 	public @ResponseBody byte[] getClassPath(@PathVariable Long postId) throws IOException {
 		Post post = postService.getPostById(postId);
@@ -99,7 +104,18 @@ public class PostController {
 		return test;
 	}
 
-	@GetMapping(value = "/video/{postId}",produces = "application/octet-stream")
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * 
+	 * @param resp
+	 * @param postId
+	 * @param rangeHeader
+	 * @return
+	 * @throws IOException
+	 */
+	@GetMapping(value = "/video/{postId}", produces = "application/octet-stream")
 	public ResponseEntity<ResourceRegion> getVideo(HttpServletResponse resp, @PathVariable long postId,
 			@RequestHeader(value = "Range", required = false) String rangeHeader) throws IOException {
 		Post post = postDao.findByPostId(postId);
@@ -111,50 +127,72 @@ public class PostController {
 	}
 
 	// Delete post by postId
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @param postId
+	 * @return
+	 * @throws PostNotFoundException
+	 */
 	@DeleteMapping("/{postId}")
-	public ApiResponse<Post> deletePost(@PathVariable long postId) throws PostNotFoundException {
-		Post post = postDao.findByPostId(postId);
-		if (post == null)
-			throw new PostNotFoundException(Constants.RESOURCE_NOT_FOUND);
-		post.setRecordStatus(false);
-		postDao.save(post);
-		return new ApiResponse<>(200, Constants.DELETED, postId);
+	public MedsolResponse<Post> deletePost(@PathVariable long postId) throws PostNotFoundException {
+		return postService.deletePosts(postId);
 	}
 
 	// Get all post By postId
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * 
+	 * @param userId
+	 * @param pageNo
+	 * @return
+	 */
 	@GetMapping("/{userId}/post/{pageNo}")
-	public ApiResponse<List<PostDto>> getAllPostByUser(@PathVariable long userId, @PathVariable int pageNo) {
-		User user = userService.findByuserId(userId);
-		if (user == null)
-			throw new UserNotFound(Constants.USER_NOT_FOUND);
-		return new ApiResponse<>(200, Constants.OK, postService.getUploadedPost(user, pageNo));
+	public MedsolResponse<List<PostDto>> getAllPostByUser(@PathVariable long userId, @PathVariable int pageNo) {
+		return postService.postByUser(userId, pageNo);
 
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * @param userId
+	 * @param pageNo
+	 * @return
+	 */
 	@GetMapping("/{userId}/feeds/{pageNo}")
-	public ApiResponse<List<PostDto>> getAllPost(@PathVariable long userId, @PathVariable int pageNo) {
-		User user = userDao.findByUserId(userId);
-		if (user == null)
-			throw new UserNotFound(Constants.USER_NOT_FOUND);
-		List<PostDto> allPost = postService.getNewsFeedPosts(user, pageNo);
-		return new ApiResponse<>(200, Constants.OK, allPost);
+	public MedsolResponse<List<PostDto>> getAllPost(@PathVariable long userId, @PathVariable int pageNo) {
+		return postService.allPosts(userId, pageNo);
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @param specList
+	 * @param userId
+	 * @param pageNo
+	 * @return
+	 */
 	@GetMapping("feeds/{userId}/bySpec/{pageNo}")
-	public ApiResponse<PostDto> getPostBySpecifications(@RequestParam List<Long> specList, @PathVariable long userId,
+	public MedsolResponse<PostDto> getPostBySpecifications(@RequestParam List<Long> specList, @PathVariable long userId,
 			@PathVariable int pageNo) {
-		User user = userDao.findByUserId(userId);
-		List<PostDto> postDtos = postService.getPostSpecType(specList, user, pageNo);
-		return new ApiResponse<PostDto>(200, Constants.OK, postDtos);
+		return postService.postBySpec(specList, userId, pageNo);
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @param postId
+	 * @return
+	 */
 	@GetMapping("/{postId}")
-	public ApiResponse<PostDto> getPostByPostId(@PathVariable long postId) {
-		Post post = postDao.findByPostId(postId);
-		if (post == null)
-			throw new ResourceNotFoundException(Constants.FILE_NOT_FOUND);
-		PostDto postDto = postService.findByPostId(post);
-		return new ApiResponse<>(200, Constants.OK, postDto);
+	public MedsolResponse<PostDto> getPostByPostId(@PathVariable long postId) {
+		return postService.postsById(postId);
 	}
 
 }

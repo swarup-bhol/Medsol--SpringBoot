@@ -33,4 +33,5 @@ public class Constants {
 	public static final String BYTES = "bytes";
 	public static final int BYTE_RANGE = 1024;
 	public static final String TOKEN_EXPIRE = "Token Expire";
+	public static final String FAILED = "Upload failed";
 }

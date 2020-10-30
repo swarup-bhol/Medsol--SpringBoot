@@ -13,7 +13,13 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@Entity
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
 public class Likes {
 
 	@Id
@@ -36,58 +42,4 @@ public class Likes {
 	private long commentId;
 	
 	private boolean recordStatus;
-
-	public long getLikeId() {
-		return likeId;
-	}
-
-	public void setLikeId(long likeId) {
-		this.likeId = likeId;
-	}
-
-
-	public Timestamp getLikeTime() {
-		return likeTime;
-	}
-
-	public void setLikeTime(Timestamp likeTime) {
-		this.likeTime = likeTime;
-	}
-
-	public Post getPost() {
-		return post;
-	}
-
-	public void setPost(Post post) {
-		this.post = post;
-	}
-
-	public User getUser() {
-		return user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
-	}
-	
-	
-
-	public long getCommentId() {
-		return commentId;
-	}
-
-	public void setCommentId(long commentId) {
-		this.commentId = commentId;
-	}
-
-	public boolean isRecordStatus() {
-		return recordStatus;
-	}
-
-	public void setRecordStatus(boolean recordStatus) {
-		this.recordStatus = recordStatus;
-	}
-
-
-
 }
