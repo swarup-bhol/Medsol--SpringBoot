@@ -25,18 +25,21 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sm.config.EnvironmentConfig;
 import com.sm.dao.PostDao;
 import com.sm.model.Post;
 
 @RestController
-@RequestMapping("/api/medsol/posts")
+//@RequestMapping("/api/medsol/posts")
 public class VideoStreamController {
-	
+
+	@Autowired
+	EnvironmentConfig config;
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	
+
 	@Autowired
 	PostDao postDao;
-	
+
 //	@GetMapping(value = "/video/{postId}",produces = "application/octet-stream")
 	public ResponseEntity<ResourceRegion> getVideo(HttpServletResponse resp, @PathVariable long postId,
 			@RequestHeader(value = "Range", required = false) String rangeHeader) throws IOException {
@@ -47,36 +50,46 @@ public class VideoStreamController {
 //		ResponseEntity<ResourceRegion> stream = postService.getVideoRegion(post, rangeHeader);
 		return null;
 	}
+
 //	@GetMapping(value = "/video/{postId}",produces = "application/octet-stream")
-	public ResponseEntity<ResourceRegion> video( @PathVariable long postId,HttpServletRequest request, @RequestHeader HttpHeaders headers)
-            throws Exception {
+	public ResponseEntity<ResourceRegion> video(@PathVariable long postId, HttpServletRequest request,
+			@RequestHeader HttpHeaders headers) throws Exception {
 		Post post = postDao.findByPostId(postId);
 		if (post == null || post.getPostVideoPath() == null) {
 			logger.info("Path not found");
 		}
 		File file = new File(post.getPostVideoPath());
-        if (!file.isFile()) {
-        	logger.info("Not a file");
-        }
+		if (!file.isFile()) {
+			logger.info("Not a file");
+		}
 
-        FileSystemResource resource = new FileSystemResource(file);
-        ResourceRegion region = resourceRegion(resource, headers);
+		FileSystemResource resource = new FileSystemResource(file);
+		ResourceRegion region = resourceRegion(resource, headers);
 
-        return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-                .contentType(MediaType.parseMediaType(Files.probeContentType(Paths.get(post.getPostVideoPath())))).body(region);
-    }
+		return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+				.contentType(MediaType.parseMediaType(Files.probeContentType(Paths.get(post.getPostVideoPath()))))
+				.body(region);
+	}
+
 	private ResourceRegion resourceRegion(FileSystemResource video, HttpHeaders headers) throws IOException {
-        long contentLength = video.contentLength();
-        List<HttpRange> ranges = headers.getRange();
-        if (ranges.size() > 0) {
-            HttpRange range = ranges.get(0);
-            long start = range.getRangeStart(contentLength);
-            long end = range.getRangeEnd(contentLength);
-            long rangeLength = Long.min(contentLength, end - start + 1);
-            return new ResourceRegion(video, start, rangeLength);
-        } else {
-            return new ResourceRegion(video, 0, contentLength);
-        }
-    }
+		long contentLength = video.contentLength();
+		List<HttpRange> ranges = headers.getRange();
+		if (ranges.size() > 0) {
+			HttpRange range = ranges.get(0);
+			long start = range.getRangeStart(contentLength);
+			long end = range.getRangeEnd(contentLength);
+			long rangeLength = Long.min(contentLength, end - start + 1);
+			return new ResourceRegion(video, start, rangeLength);
+		} else {
+			return new ResourceRegion(video, 0, contentLength);
+		}
+	}
 
+	@GetMapping("/hello")
+	public String hello() {
+		
+		System.out.println(config);
+		return config.email.getContentType();
+
+	}
 }

@@ -12,19 +12,25 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.sm.config.EnvironmentConfig;
 import com.sm.exception.EmailNotSent;
 
 @Component
 public class EmailService {
 	
+	
+	@Autowired
+	EnvironmentConfig config;
+	
 	public boolean sentMail(String email,String code) {
 	      String recipientAddress = email;
-	      final  String senderAddress = "swarup.bip@outlook.com";
-	      final String password="Swarup@123";
+	      final  String senderAddress = config.getEmail().getSender(); //"swarup.bip@outlook.com";
+	      final String password=config.getEmail().getPassword();  //"Swarup@123";
 	      boolean result = false;
-	      String host = "smtp.office365.com";
+	      String host = config.getEmail().getHost(); //"smtp.office365.com";
 
 	      // Get system properties
 	      Properties props = System.getProperties();
@@ -44,15 +50,15 @@ public class EmailService {
 
 	      try {
 	             MimeMessage msg = new MimeMessage(session);
-	             msg.addHeader("Content-type", "text/HTML; charset=UTF-8");
+	             msg.addHeader(config.getEmail().getContentType(), "text/HTML; charset=UTF-8"); //"Content-type"
 	             msg.addHeader("format", "flowed");
 	             msg.addHeader("Content-Transfer-Encoding", "8bit");
 	             msg.setFrom(new InternetAddress(senderAddress));
 	             msg.setSentDate(new Date());
-	             msg.setSubject("Reset Password");  
-	             msg.setText("Hi , Your OTP for Resetting the Password is  : "+"  "+ code);  
+	             msg.setSubject(config.getEmail().getSubject());  //"Reset Password"
+	             msg.setText(config.getEmail().getMessage()+"  "+ code);  //"Hi , Your OTP for Resetting the Password is  : "
 	             msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientAddress, false));
-	             System.out.println("Message is ready");
+	             System.out.println(config.getEmail().getStatus()); //"Message is ready"
 	             Transport.send(msg);
 	             result = true;
 	      } catch (MessagingException mex) {

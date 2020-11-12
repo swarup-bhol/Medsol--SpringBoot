@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.sm.dao.FollowDao;
 import com.sm.dao.ProfessionDao;
@@ -27,6 +28,7 @@ import com.sm.util.Constants;
 import com.sm.util.MedsolResponse;
 
 @Service
+@Transactional
 public class FollowServiceImpl implements FollowService {
 
 	Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -40,6 +42,15 @@ public class FollowServiceImpl implements FollowService {
 	@Autowired
 	ProfessionDao professionDao;
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @purpose follow users
+	 * @param userId , followerId
+	 * @return Follower
+	 */
 	@Override
 	public Follower followUser(long userId, long followerId) {
 		Follower fo = new Follower();
@@ -59,6 +70,18 @@ public class FollowServiceImpl implements FollowService {
 		return follower;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * 
+	 * 
+	 * @purpose isFollowing
+	 * @param userId 
+	 * @param followId
+	 * @return commentList
+	 */
 	@Override
 	public boolean isFollowing(long userId, long followId) {
 		Follower followers = null;
@@ -79,6 +102,17 @@ public class FollowServiceImpl implements FollowService {
 		return isfollowing;
 	}
 
+	
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * 
+	 * @purpose findAllFollowing
+	 * @param userId
+	 * @return List
+	 */
 	@Override
 	public List<SuggetionsDto> findAllFollowing(long userId) {
 		List<Follower> followers = followDao.findByFollowedByAndIsFollowing(userId, true);
@@ -109,6 +143,14 @@ public class FollowServiceImpl implements FollowService {
 		return users;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose  findAllFollowers
+	 * @param    userId
+	 * @return   List
+	 */
 	@Override
 	public List<SuggetionsDto> findAllFollowers(long userId) {
 		List<Follower> followers = followDao.findByUserIdAndIsFollowing(userId, true);
@@ -150,6 +192,20 @@ public class FollowServiceImpl implements FollowService {
 //		return new ArrayList<User>();
 //	}
 
+	
+
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * 
+	 * @purpose  getAllUsersNotFollowedByCurrentUser
+	 * @param    user
+	 * @param  pageNo
+	 * @param pageSize
+	 * 
+	 * @return   List
+	 */
 	@Override
 	public List<SuggetionsDto> getAllUsersNotFollowedByCurrentUser(User user, int pageNo, int pageSize) {
 		List<SuggetionsDto> suggetionsDtos = new ArrayList<SuggetionsDto>();
@@ -178,6 +234,18 @@ public class FollowServiceImpl implements FollowService {
 
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @purpose followUsers
+	 * 
+	 * @param userId
+	 * @param followerId
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<Follower> follUsers(long userId, long followerId) {
 
@@ -205,6 +273,18 @@ public class FollowServiceImpl implements FollowService {
 		return response;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @purpose unfollowUser
+	 * 
+	 * @param userId
+	 * @param followerId
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<Follower> unfollowUser(long userId, long followerId) {
 		MedsolResponse<Follower> response = new MedsolResponse<>(true, 200, Constants.OK, null);
@@ -229,6 +309,17 @@ public class FollowServiceImpl implements FollowService {
 		return response;
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @purpose isFollowingUser
+	 * 
+	 * @param userId
+	 * @param followerId
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<Boolean> isFollowingUser(long userId, long followId) {
 		MedsolResponse<Boolean> response = new MedsolResponse<Boolean>(false, 200, Constants.OK, null);
@@ -249,6 +340,19 @@ public class FollowServiceImpl implements FollowService {
 		return response;
 	}
 
+	
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @purpose find all Follower
+	 * 
+	 * @param userId
+	 * 
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<List<SuggetionsDto>> allFollower(long userId) {
 		MedsolResponse<List<SuggetionsDto>> response = new MedsolResponse<>(false, 200, "Success", null);
@@ -267,6 +371,18 @@ public class FollowServiceImpl implements FollowService {
 		return response;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @purpose find all Followings
+	 * 
+	 * @param userId
+	 * 
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<List<SuggetionsDto>> allFollowings(long userId) {
 
@@ -287,6 +403,20 @@ public class FollowServiceImpl implements FollowService {
 		return response;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @purpose find all unfolowers
+	 * 
+	 * @param userId
+	 * @param pageNo
+	 * @param pagesize
+	 * 
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<List<PersonDto>> unfolowers(long userId, int pageNo, int pageSize) {
 		MedsolResponse<List<PersonDto>> response = new MedsolResponse<>(false, 200, Constants.OK, null);

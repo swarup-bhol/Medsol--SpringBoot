@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.sm.dao.UserDao;
 import com.sm.dto.PasswordDto;
@@ -19,6 +20,7 @@ import com.sm.util.EmailService;
 import com.sm.util.MedsolResponse;
 
 @Service
+@Transactional
 public class PasswordVerrificationServiceImpl implements PasswordVerrificationService {
 
 	Logger log = LoggerFactory.getLogger(this.getClass());
@@ -32,6 +34,18 @@ public class PasswordVerrificationServiceImpl implements PasswordVerrificationSe
 	@Autowired
 	EmailService emailService;
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose verify code
+	 * 
+	 * @param email
+	 * @param code
+	 * 
+	 * @return User
+	 */
 	@Override
 	public User verifyCode(String email, String code) {
 		User user = null;
@@ -54,6 +68,19 @@ public class PasswordVerrificationServiceImpl implements PasswordVerrificationSe
 
 	}
 
+	
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose change password
+	 * 
+	 * @param user
+	 * @param passwordDto
+	 * 
+	 * @return User
+	 * 
+	 */
 	@Override
 	public User changePassword(User user, PasswordDto passwordDto) {
 		User save = null;
@@ -70,6 +97,17 @@ public class PasswordVerrificationServiceImpl implements PasswordVerrificationSe
 		return save;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose Send mail
+	 * 
+	 * @param userDetails
+	 * 
+	 * @return boolean
+	 * 
+	 */
 	@Override
 	public boolean sendMail(User userDetails) {
 		boolean status = false;
@@ -90,6 +128,19 @@ public class PasswordVerrificationServiceImpl implements PasswordVerrificationSe
 		return status;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose update Password
+	 * 
+	 * @param passwordDto
+	 * @param userId
+	 *
+	 * 
+	 * @return MedsolResponse
+	 * 
+	 */
 	@Override
 	public MedsolResponse<User> updatePass(PasswordDto passwordDto, long userId) {
 		MedsolResponse<User> response = new MedsolResponse<>(false, 200, Constants.OK, null);
@@ -108,6 +159,19 @@ public class PasswordVerrificationServiceImpl implements PasswordVerrificationSe
 		return response;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose verify emails
+	 * 
+	 * @param email
+	 * @param code
+	 * 
+	 * 
+	 * @return MedsolResponse
+	 * 
+	 */
 	@Override
 	public MedsolResponse<User> verify(String email, String code) {
 		User user = verifyCode(email, code);
@@ -116,6 +180,17 @@ public class PasswordVerrificationServiceImpl implements PasswordVerrificationSe
 		return new MedsolResponse<>(true, 200, Constants.OK, user);
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose check password
+	 * 
+	 * @param email
+	 * 
+	 * @return MedsolResponse
+	 * 
+	 */
 	@Override
 	public MedsolResponse<String> checkPass(String email) {
 		MedsolResponse<String> response = new MedsolResponse<>(false, 200, Constants.OK, null);

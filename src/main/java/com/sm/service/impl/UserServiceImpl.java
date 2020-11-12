@@ -1,6 +1,5 @@
 package com.sm.service.impl;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,6 +22,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.sm.dao.FollowDao;
@@ -53,8 +53,8 @@ import com.sm.util.Constants;
 import com.sm.util.JwtTokenUtil;
 import com.sm.util.MedsolResponse;
 
-
 @Service(value = "userService")
+@Transactional
 public class UserServiceImpl implements UserDetailsService, UserService {
 
 	Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -92,6 +92,17 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 	@Autowired
 	FollowService followService;
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose  load user by name
+	 * 
+	 * @param userName
+	 * 
+	 * @return UserDetails
+	 */
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		org.springframework.security.core.userdetails.User loginUser = null;
 		try {
@@ -103,16 +114,34 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 					user.getUserPassword(), getAuthority());
 
 		} catch (Exception e) {
-			logger.error("Error :loadUserByUsername ",e.getMessage());
+			logger.error("Error :loadUserByUsername ", e.getMessage());
 		}
 
 		return loginUser;
 	}
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * 
+	 * @return List
+	 */
 	private List<SimpleGrantedAuthority> getAuthority() {
 		return Arrays.asList(new SimpleGrantedAuthority("ADMIN"));
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose  save User
+	 * 
+	 * @param userDto
+	 * 
+	 * @return User
+	 */
 	@Override
 	public User save(UserDto user) {
 		User user2 = null;
@@ -126,22 +155,44 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 			user2 = userDao.save(newUser);
 
 		} catch (Exception e) {
-			logger.error("Error :save ",e.getMessage());
+			logger.error("Error :save ", e.getMessage());
 		}
 		return user2;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose findOne
+	 * 
+	 * @param username
+	 * 
+	 * @return User
+	 */
 	@Override
 	public User findOne(String username) {
 		User user = null;
 		try {
 			user = findByEmail(username);
 		} catch (Exception e) {
-			logger.error("Error :findOne ",e.getMessage());
+			logger.error("Error :findOne ", e.getMessage());
 		}
 		return user;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose check user
+	 * 
+	 * @param userDto
+	 * 
+	 * @return boolean
+	 */
 	@Override
 	public boolean checkUser(UserDto userDto) {
 		User user = null;
@@ -156,6 +207,14 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		return true;
 	}
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * 
+	 * @param email
+	 * @return user
+	 */
 	private User findByEmail(String email) {
 		User user = null;
 		try {
@@ -165,11 +224,21 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
 			}
 		} catch (Exception e) {
-			logger.error("Error :findByEmail ",e.getMessage());
+			logger.error("Error :findByEmail ", e.getMessage());
 		}
 		return user;
 	}
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose find by userId
+	 * 
+	 * @param userId
+	 * 
+	 * @return User
+	 */
 	public User findByuserId(long userId) {
 		User user = null;
 		try {
@@ -178,7 +247,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 				throw new UsernameNotFoundException("User Not Found" + userId);
 			}
 		} catch (Exception e) {
-			logger.error("Error :findByuserId ",e.getMessage());
+			logger.error("Error :findByuserId ", e.getMessage());
 		}
 		return user;
 	}
@@ -186,6 +255,13 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 	@Override
 	/**
 	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose login user
+	 * 
+	 * @param loginUser
+	 * 
+	 * @return boolean
 	 */
 	public boolean loginUser(LoginUser loginUser) {
 		boolean result = false;
@@ -196,11 +272,23 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 				result = bcryptEncoder.matches(loginUser.getPassword(), user.getUserPassword());
 			}
 		} catch (Exception e) {
-			logger.error("Error :loginUser ",e.getMessage());
+			logger.error("Error :loginUser ", e.getMessage());
 		}
 		return result;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose upload profile picture
+	 * 
+	 * @param file
+	 * @param user
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<User> uploadProfilePic(MultipartFile file, User user) {
 		MedsolResponse<User> response = new MedsolResponse<>(true, 200, Constants.FAILED, null);
@@ -228,6 +316,16 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
 	}
 
+	
+	/***
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose get profile details
+	 * 
+	 * @param user
+	 * @return  MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<ProfileDetailsDto> getProfileDetails(User user) {
 
@@ -278,6 +376,16 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		return response;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @param userId
+	 * @param profileDto
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<ProfileDetailsDto> updateProfile(long userId, UpdateProfileDto profileDto) {
 		User user = null;
@@ -298,6 +406,16 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		return profileDetails;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @param user
+	 * @param passwordDto
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<User> updatePassWord(User user, PasswordDto passwordDto) {
 		MedsolResponse<User> response = new MedsolResponse<>(true, 200, Constants.PASSWORD_NOT_MATCH, null);
@@ -313,6 +431,15 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		return response;
 	}
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @param profile
+	 * @param user
+	 * 
+	 * @return User
+	 */
 	@Override
 	public User createProfile(Profile profile, User user) {
 		User save = null;
@@ -333,6 +460,17 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		return save;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * 
+	 * @param name
+	 * @param userId
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<List<SuggetionsDto>> searchUser(String name, long userId) {
 		List<User> users = new ArrayList<User>();
@@ -360,6 +498,16 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		return respone;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @param file
+	 * @param user
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<User> uploadDocument(MultipartFile file, User user) throws IOException {
 
@@ -390,6 +538,16 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		return user1;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @param profile
+	 * @param email
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<JwtToken> createProfile(Profile profile, String email) {
 		MedsolResponse<JwtToken> medsolResponse = new MedsolResponse<>(false, 200, Constants.OK, null);
@@ -413,6 +571,15 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		return medsolResponse;
 	}
 
+	
+	/*
+	 * 
+	 * @author swarupb
+	 * 
+	 * @param loginUser
+	 * @return MedsolResponse
+	 * 
+	 */
 	@Override
 	public MedsolResponse<JwtToken> login(LoginUser loginUser) {
 
@@ -425,8 +592,9 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 					final String token = jwtTokenUtil.generateToken(user);
 					response = new MedsolResponse<>(true, 200, Constants.OK,
 							new JwtToken(token, user.getUserEmail(), user.getUserId()));
+				} else {
+					response = new MedsolResponse<>(false, 400, Constants.INVALID_CREDENTIALS, loginUser);
 				}
-				response = new MedsolResponse<>(false, 400, Constants.INVALID_CREDENTIALS, loginUser);
 			}
 		} catch (HibernateException e) {
 			logger.error("DB Error : login", e.getMessage());
@@ -436,6 +604,14 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 		return response;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @param user
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<User> createNewUser(UserDto user) {
 		MedsolResponse<User> response = new MedsolResponse<>(false, 409, Constants.USER_EXIST, user);

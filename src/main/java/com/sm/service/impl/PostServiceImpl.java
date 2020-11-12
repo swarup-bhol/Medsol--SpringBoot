@@ -27,6 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -59,6 +60,7 @@ import com.sm.util.MedsolResponse;
 
 
 @Service
+@Transactional
 public class PostServiceImpl implements PostService {
 
 	public static final String uploadingDir = System.getProperty("user.dir") + "/Uploads/Posts";
@@ -93,6 +95,16 @@ public class PostServiceImpl implements PostService {
 
 	/**
 	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose upload media
+	 * 
+	 * @param file
+	 * @param user
+	 * @param content
+	 * @param type
+	 * 
+	 * @return Post
 	 */
 	@Override
 	public Post uploadMedia(MultipartFile file, User user, String content, String type) throws IOException {
@@ -139,6 +151,20 @@ public class PostServiceImpl implements PostService {
 		return savePost;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * 
+	 * @purpose create new post
+	 * @param user
+	 * @param content
+	 * @param type
+	 * 
+	 * @return create post
+	 * 
+	 */
 	@Override
 	public Post createPost(User user, String content, String type) {
 
@@ -160,6 +186,17 @@ public class PostServiceImpl implements PostService {
 		return post;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose get post by Id
+	 * 
+	 * @param postId
+	 * 
+	 * @return Post
+	 * 
+	 */
 	@Override
 	public Post getPostById(long postId) {
 		Post post = null;
@@ -174,6 +211,18 @@ public class PostServiceImpl implements PostService {
 
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose Update Media
+	 * 
+	 * @param post
+	 * @param content
+	 * @param file
+	 * 
+	 * @return Post
+	 * 
+	 */
 	@Override
 	public Post updateMedia(Post post, String content, MultipartFile file) throws IOException {
 		Post post2 = null;
@@ -204,6 +253,19 @@ public class PostServiceImpl implements PostService {
 		return post2;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose get Newsfeed Post
+	 * 
+	 * @param user
+	 * @param pageNo
+	 *
+	 * 
+	 * @return List
+	 * 
+	 */
 	@Override
 	public List<PostDto> getNewsFeedPosts(User user, int pageNo) {
 
@@ -224,6 +286,19 @@ public class PostServiceImpl implements PostService {
 		return preparePosts;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose Get Post by SpecId
+	 * 
+	 * @param pospecListst
+	 * @param user
+	 * @param pageNo
+	 * 
+	 * @return List
+	 * 
+	 */
 	@Override
 	public List<PostDto> getPostSpecType(List<Long> specList, User user, int pageNo) {
 		List<Specialization> allSpecById = new ArrayList<Specialization>();
@@ -247,6 +322,18 @@ public class PostServiceImpl implements PostService {
 		return preparePosts;
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose Get upload Post
+	 * 
+	 * @param user
+	 * @param pageNo
+	 * 
+	 * 
+	 * @return List
+	 * 
+	 */
 	@Override
 	public List<PostDto> getUploadedPost(User user, int pageNo) {
 		List<Post> posts = new ArrayList<Post>();
@@ -270,7 +357,7 @@ public class PostServiceImpl implements PostService {
 	/**
 	 * @author swarup
 	 * 
-	 * 
+	 * @purpose prepare post
 	 * @param posts
 	 * @param user
 	 * @return List
@@ -301,6 +388,17 @@ public class PostServiceImpl implements PostService {
 
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose Check Like
+	 * 
+	 * @param likes
+	 *
+	 * 
+	 * @return boolean
+	 * 
+	 */
 	private boolean checkLike(Likes likes) {
 		if (likes == null)
 			return false;
@@ -308,6 +406,16 @@ public class PostServiceImpl implements PostService {
 			return likes.isRecordStatus();
 	}
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose prepare comment
+	 * 
+	 * @param comments
+	 * @param user
+	 * @return List
+	 */
 	private List<CommentListDto> prepareComment(List<Comment> comments, User user) {
 		List<CommentListDto> listDtos = new ArrayList<CommentListDto>();
 
@@ -329,6 +437,17 @@ public class PostServiceImpl implements PostService {
 		return listDtos;
 	}
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose is like
+	 * 
+	 * @param post
+	 * @param user
+	 * @param commentId
+	 * @return boolean
+	 */
 	private boolean isLike(Post post, User user, long commentId) {
 		boolean islike = false;
 		Likes commentLike = null;
@@ -347,6 +466,15 @@ public class PostServiceImpl implements PostService {
 		return islike;
 	}
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose prepare replay
+	 * @param comment
+	 * @param user
+	 * @return List
+	 */
 	private List<ReplayListCommentDto> prepareReplay(Comment comment, User user) {
 		List<ReplayListCommentDto> listCommentDtos = new ArrayList<ReplayListCommentDto>();
 		List<Comment> findByReCommentId = new ArrayList<Comment>();
@@ -370,6 +498,17 @@ public class PostServiceImpl implements PostService {
 		return listCommentDtos;
 	}
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose find post by Id
+	 * 
+	 * @param post
+	 * 
+	 * @return PostDto
+	 * 
+	 */
 	@Override
 	public PostDto findByPostId(Post post) {
 		PostDto postDto = new PostDto();
@@ -395,6 +534,16 @@ public class PostServiceImpl implements PostService {
 		return postDto;
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose update Post type
+	 * 
+	 * @param savePost
+	 * @param type
+	 * 
+	 * @return void
+	 */
 	private void updatePostType(Post savePost, String type) {
 		List<Specialization> specializations = null;
 		ObjectMapper mapper = new ObjectMapper();
@@ -420,6 +569,16 @@ public class PostServiceImpl implements PostService {
 
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose find video regions
+	 * 
+	 * @param post
+	 * @param rangeHeader
+	 * 
+	 * @return ResponseEntity
+	 */
 	@Override
 	public ResponseEntity<ResourceRegion> getVideoRegion(Post post, String rangeHeader) throws IOException {
 		FileUrlResource videoResource = new FileUrlResource(post.getPostVideoPath());
@@ -429,6 +588,18 @@ public class PostServiceImpl implements PostService {
 				.body(resourceRegion);
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose getting resource region
+	 * 
+	 * @param video
+	 * @param httpHeaders
+	 * @return ResourceRegion
+	 * @throws IOException
+	 * 
+	 * 
+	 */
 	private ResourceRegion getResourceRegion(UrlResource video, String httpHeaders) throws IOException {
 		ResourceRegion resourceRegion = null;
 
@@ -456,6 +627,20 @@ public class PostServiceImpl implements PostService {
 		return resourceRegion;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose create new Post
+	 * 
+	 * @param userId
+	 * @param content
+	 * @param file
+	 * @param type
+	 * 
+	 * @return MedsolResponse
+	 * 
+	 */
 	@Override
 	public MedsolResponse<Post> createNewPost(Long userId, String content, MultipartFile file, String type) {
 		MedsolResponse<Post> response = new MedsolResponse<>(true, 200, Constants.CREATED, null);
@@ -477,6 +662,19 @@ public class PostServiceImpl implements PostService {
 		return response;
 	}
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose update Post
+	 * 
+	 * @param postId
+	 * @param content
+	 * @param file
+	 * 
+	 * @return MedsolResponse
+	 * 
+	 */
 	@Override
 	public MedsolResponse<Post> updatePost(Long postId, String content, MultipartFile file) {
 
@@ -500,6 +698,15 @@ public class PostServiceImpl implements PostService {
 		return response;
 	}
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose delete post
+	 * 
+	 * @param postId
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<Post> deletePosts(long postId) {
 		try {
@@ -516,6 +723,18 @@ public class PostServiceImpl implements PostService {
 		return new MedsolResponse<>(true, 200, Constants.DELETED, postId);
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose find post by user
+	 * 
+	 * @param useerId
+	 * @param pageNo
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<List<PostDto>> postByUser(long userId, int pageNo) {
 		MedsolResponse<List<PostDto>> response = new MedsolResponse<>(false, 200, Constants.OK, null);
@@ -530,6 +749,18 @@ public class PostServiceImpl implements PostService {
 		return response;
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @purpose fild all post
+	 * 
+	 * @param userId
+	 * @param pageNo
+	 * 
+	 * @returnMedsolResponse
+	 * 
+	 */
 	@Override
 	public MedsolResponse<List<PostDto>> allPosts(long userId, int pageNo) {
 		MedsolResponse<List<PostDto>> response = new MedsolResponse<>(false, 200, Constants.OK, null);
@@ -546,6 +777,19 @@ public class PostServiceImpl implements PostService {
 		return response;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose find post by specifications
+	 * 
+	 * @param list
+	 * @param userId
+	 * @param pageNo
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<PostDto> postBySpec(List<Long> specList, long userId, int pageNo) {
 		MedsolResponse<PostDto> response = new MedsolResponse<PostDto>(false, 200, Constants.OK, null);
@@ -561,6 +805,17 @@ public class PostServiceImpl implements PostService {
 		return response;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose find by postId
+	 * 
+	 * @param postId
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<PostDto> postsById(long postId) {
 		MedsolResponse<PostDto> response = new MedsolResponse<>(false, 200, Constants.OK, null);

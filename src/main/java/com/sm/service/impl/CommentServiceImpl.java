@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.sm.dao.CommentDao;
 import com.sm.dao.PostDao;
@@ -25,6 +26,7 @@ import com.sm.service.UserService;
 import com.sm.util.Constants;
 
 @Service
+@Transactional
 public class CommentServiceImpl implements CommentService {
 	Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -41,6 +43,15 @@ public class CommentServiceImpl implements CommentService {
 	@Autowired
 	NotificationService notificationService;
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * 
+	 * @purpose creating new comment
+	 * @param commentDto
+	 * @return Objects
+	 */
 	@Override
 	public CommentListDto createNewComment(CommentDto commentDto) {
 		CommentListDto dtos = new CommentListDto();
@@ -70,6 +81,13 @@ public class CommentServiceImpl implements CommentService {
 		return dtos;
 	}
 
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose create replay comment
+	 * @param commentDto
+	 * @return commentList
+	 */
 	@Override
 	public CommentListDto createNewReComment(ReCommentDto reCommentDto) {
 		Comment comment = null;

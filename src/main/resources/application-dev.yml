@@ -27,3 +27,6 @@ spring:
       max-request-size: 100MB
 file:
   upload-dir: C:\Users\swarupb\Documents\upload
+
+  
+# management.port: 9100

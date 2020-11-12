@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.sm.dao.CommentDao;
 import com.sm.dao.LikeDao;
@@ -23,6 +24,7 @@ import com.sm.util.Constants;
 import com.sm.util.MedsolResponse;
 
 @Service
+@Transactional
 public class LikeServiceImpl implements LikeService {
 	public static final String LIKE = "like";
 	Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -45,6 +47,16 @@ public class LikeServiceImpl implements LikeService {
 	@Autowired
 	NotificationService notificationService;
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose creating new like
+	 * @param user
+	 * @param post
+	 * 
+	 * @return Likes
+	 */
 	@Override
 	public Likes createNewLike(User user, Post post) {
 		Likes likes = null;
@@ -71,6 +83,17 @@ public class LikeServiceImpl implements LikeService {
 
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose update new like
+	 * @param user
+	 * @param post
+	 * 
+	 * @return Likes
+	 */
 	@Override
 	public Likes updateUnlike(User user, Post post) {
 		Likes likes = null;
@@ -93,6 +116,17 @@ public class LikeServiceImpl implements LikeService {
 
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose creating new comment like
+	 * @param comment
+	 * @param user
+	 * 
+	 * @return Likes
+	 */
 	@Override
 	public Likes createNewCommentLike(Comment comment, User user) {
 		Likes like = null;
@@ -116,6 +150,17 @@ public class LikeServiceImpl implements LikeService {
 		return like;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose  update comment like
+	 * @param user
+	 * @param comment
+	 * 
+	 * @return Likes
+	 */
 	@Override
 	public Likes updateCommentUnlike(User user, Comment comment) {
 		Likes like = null;
@@ -137,6 +182,16 @@ public class LikeServiceImpl implements LikeService {
 
 	}
 
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose creating new like
+	 * @param postid
+	 * @param userid
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<Likes> createLike(long postId, long userId) {
 		MedsolResponse<Likes> response = new MedsolResponse<>(true, 200, Constants.OK, null);
@@ -159,6 +214,17 @@ public class LikeServiceImpl implements LikeService {
 		return response;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose update  new like
+	 * @param userid
+	 * @param postid
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<Likes> postUnlike(long postId, long userId) {
 		MedsolResponse<Likes> response = new MedsolResponse<>(true, 200, Constants.OK, null);
@@ -181,6 +247,17 @@ public class LikeServiceImpl implements LikeService {
 		return response;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose creating new comment like
+	 * @param commentid
+	 * @param userid
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<Likes> createCmtLike(long commentId, long userId) {
 		MedsolResponse<Likes> response = new MedsolResponse<>(true, 200, Constants.OK, null);
@@ -202,6 +279,17 @@ public class LikeServiceImpl implements LikeService {
 		return response;
 	}
 
+	
+	/**
+	 * 
+	 * @author swarupb
+	 * 
+	 * @purpose updating new comment like
+	 * @param commentid
+	 * @param userid
+	 * 
+	 * @return MedsolResponse
+	 */
 	@Override
 	public MedsolResponse<Likes> unlikeCmt(long commentId, long userId) {
 		MedsolResponse<Likes> response = new MedsolResponse<>(false, 200, Constants.OK, null);

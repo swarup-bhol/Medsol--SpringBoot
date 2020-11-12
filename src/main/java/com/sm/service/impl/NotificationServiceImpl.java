@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.sm.dao.NotificationDao;
 import com.sm.model.Notification;
@@ -21,6 +22,7 @@ import com.sm.model.User;
 import com.sm.service.NotificationService;
 
 @Service
+@Transactional
 public class NotificationServiceImpl implements NotificationService {
 	public static final String COMMENT = "comment";
 	public static final String LIKE = "like";
@@ -33,6 +35,16 @@ public class NotificationServiceImpl implements NotificationService {
 	@Autowired
 	private SimpMessagingTemplate template;
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose getNotifications
+	 * @param userId
+	 * 
+	 * @return List
+	 * 
+	 */
 	@Override
 	public List<Notification> getNotification(long userId) {
 		List<Notification> findNotificationByUserId = new ArrayList<Notification>();
@@ -46,6 +58,16 @@ public class NotificationServiceImpl implements NotificationService {
 		return findNotificationByUserId;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose Update Notifications
+	 * @param findNotificationByUserId
+	 * 
+	 * @return Void
+	 * 
+	 */
 	@Async
 	private void updatenotification(List<Notification> findNotificationByUserId) {
 		Iterator<Notification> iterator = findNotificationByUserId.iterator();
@@ -57,6 +79,19 @@ public class NotificationServiceImpl implements NotificationService {
 
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose Create Notifications
+	 * 
+	 * @param post
+	 * @param user
+	 * @param type
+	 * 
+	 * @return Notification
+	 * 
+	 */
 	@Override
 	public Notification createNotification(Post post, User user, String type) {
 
@@ -87,7 +122,18 @@ public class NotificationServiceImpl implements NotificationService {
 		}
 		return notification1;
 	}
-
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose Get old Notifications
+	 * 
+	 * @param userId
+	 * @param pageNo
+	 *
+	 * 
+	 * @return Notification
+	 * 
+	 */
 	@Override
 	public List<Notification> getOldNotification(long userId, int pageNo) {
 		List<Notification> notifications = new ArrayList<Notification>();
@@ -101,6 +147,15 @@ public class NotificationServiceImpl implements NotificationService {
 		return notifications;
 	}
 
+	
+	/**
+	 * @author swarupb
+	 * 
+	 * @purpose send notifications
+	 * 
+	 * @param post
+	 * @return void
+	 */
 	private void sendNotification(Post post) {
 		long userId = post.getUser().getUserId();
 		String user = String.valueOf(userId);
